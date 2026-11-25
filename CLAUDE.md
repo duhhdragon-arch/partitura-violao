@@ -34,6 +34,8 @@ Abrir `http://localhost:8000`. No celular, testar pelo site do GitHub Pages (htt
 - **Corrigir acorde** (25/11/2026): cada tempo da folha tem um `<rect class="hit">` (clicável e focável por teclado, Enter/Espaço) que abre o `<dialog id="pk">`: 12 notas (♯ ou ♭ conforme o tom), tipo (maior, menor, 7, m7), prévia sonora com piano sintetizado e os botões "Sem acorde", Cancelar e Aplicar. `PK.r` é a nota como aparece na tela; ao salvar desconta `st.tr`. O acorde corrigido ganha `ed:true` e aparece na cor de destaque. `st.edits` conta as correções; ½×, 2×, 3/4 e troca de instrumento **perguntam antes** (`keepEdits`), porque reanalisar apaga as correções.
 - **Imprimir / PDF** (25/11/2026): `window.print()`. O CSS `@media print` mostra só a `.sheet` em papel branco, mais `.pinfo` (tom · bpm · compasso · instrumento · transposição) e `.pfoot`. `render()` gera **um `<svg>` por sistema** (linha), com `break-inside:avoid`, então a página nunca corta uma linha no meio. Em `beforeprint`, `st.printW = 700` (largura A4) e o render refaz; `afterprint` volta ao normal.
 - **Salvar no Repertório** (25/11/2026): abre o diálogo `#sv` (nome, artista) e depois uma aba nova em `../repertorio-palco/#importar=<base64url(JSON)>`. O JSON é `{v:1, app, titulo, artista, tom, bpm, cifra, notas}`. A cifra vem de `cifraRep()` no formato do Repertório: `| C G7 | Dm | F |   |`, 4 compassos por linha, `[m:ss]` a cada 8, `%` para compasso sem troca e vazio para silêncio (o "—" não é aceito pelo `isChordLine` do Repertório). O fragmento `#` não vai para o servidor. Limite de 60.000 caracteres. **O Repertório valida e pede confirmação** (ver o `app.js` dele, `importarDoLink`).
+- **Afinador** (25/11/2026): botão 🎯 na linha do instrumento abre o `<dialog id="tun">`. Usa `getUserMedia` + `AnalyserNode` (4096 amostras), lido a cada 90 ms por `yin()`: função diferença normalizada (limiar 0,12), interpolação parabólica e faixa de 38 a 1200 Hz (inclui o Mi grave do baixo). Só aceita leituras com confiança ≥ 0,85, usa a mediana das últimas 5 e descarta leitura a mais de meio semitom da mediana (o ataque da corda às vezes sai uma oitava acima). Ponteiro de −50 a +50 cents, verde dentro de ±5, com textos "aperte (suba)" e "afrouxe (desça)". Chips das 6 cordas (E2 A2 D3 G3 B3 E4). Lá = 440 fixo. **Ao fechar, `tunStop()` para as trilhas do microfone** (o indicador do microfone apaga). Não abre durante uma gravação.
+- **Acordes desta música** (25/11/2026): quadro `#chd` dentro da `.sheet`, que também sai na impressão. Um cartão por acorde diferente, na ordem em que aparece, já transposto. No violão, um diagrama de casas: `ABERTOS` para as formas abertas comuns e o resto em pestana, na forma de Mi (tônica na 6ª) ou de Lá (tônica na 5ª), a mais perto da cabeça (`forma()`). No teclado, 2 oitavas com as teclas do acorde (laranja = tônica). Tocar no cartão faz o acorde soar (`playChord`): rasgueado Karplus-Strong no violão, timbre atual no teclado.
 - **● Gravar / ■ Parar**: microfone ao vivo. Enquanto grava, mostra o acorde atual grande e o histórico. Ao parar, analisa a gravação inteira e monta a partitura. Limite: 4 min.
 - **Enviar gravação**: aceita `audio/*` e `video/*` (MP3, M4A, WAV, MP4…). Analisa os primeiros 4 min.
 - **▶ Ouvir**: toca o áudio e destaca o compasso atual na pauta.
@@ -107,7 +109,9 @@ Testado em Node com stubs de DOM:
 - Demo com aleatório de semente fixa (`rnd()`, `seed=20261125` em `demo()`), então sai sempre igual. Antes, com `Math.random`, a demo do violão errava 2 em 25 vezes (Em antes do C no 1º tempo, Am atrasado um tempo). **Ou seja: com áudio real, C/Em no 1º tempo e trocas atrasadas em um tempo podem acontecer. É para isso que existe a correção manual.**
 - Contagem (Node): demo com `st.grid={bpm:96}` correta no violão e no pad. Com 1 tempo de silêncio no começo, sai "— C | C Am | …", ou seja, respeita o tempo 1 da contagem.
 - Correção (Node): com transposição +2, corrigir, trocar e apagar acordes refletem certo no "Copiar cifra" e continuam certos ao voltar a transposição pra 0.
-- **Contagem ainda não testada com microfone real.** A latência do microfone pode deslocar uns 20–50 ms, coberto pelo `PRE`.
+- **Contagem ainda não testada com microfone real.**
+- Afinador (Node): tons com harmônicos + ruído em 9 notas (de E1 41 Hz a A5) × 5 desafinações (−30 a +25 cents): pior erro de 0,21 cents. Silêncio e ruído não geram leitura. Corda Karplus-Strong: variação < 0,05 cent entre leituras; um único erro de oitava, na janela do ataque, que a mediana absorve. No Chrome com microfone falso, a cadeia mic → analyser → YIN funcionou (48 kHz, `running`), mas o bipe falso é picotado e foi descartado pela confiança, o que é o esperado. **Falta testar com instrumento de verdade.**
+- Formas de violão (Node): as 48 combinações (12 × 4) só tocam notas do acorde, têm tônica + terça (+ sétima) e o baixo é a tônica. A latência do microfone pode deslocar uns 20–50 ms, coberto pelo `PRE`.
 - Violão: o tio já testou e gostou. **Teclado ainda não testado com gravação real.**
 
 ## Limitações conhecidas
@@ -120,7 +124,7 @@ Testado em Node com stubs de DOM:
 
 ## Próximos passos (ideias)
 1. Testar com gravações reais e ajustar limiares (silêncio 6%, penalidade Viterbi 0,12, onset 1,6×).
-2. Diagramas dos acordes (posição dos dedos) e tablatura.
+2. Diagramas feitos (violão e teclado, 25/11/2026). Falta tablatura e afinador de baixo (cordas E1 A1 D2 G2).
 3. PDF feito (impressão, 25/11/2026). Falta MusicXML para abrir no MuseScore.
 4. ~~Edição manual~~ (feito 25/11/2026). Próximo: corrigir também notas da melodia.
 5. Mais tipos de acorde (sus, dim, 9, baixo invertido) com detecção do baixo pela faixa grave.

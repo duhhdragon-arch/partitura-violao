@@ -126,8 +126,32 @@ dialog form{display:grid;gap:8px}
  .pinfo{display:block;text-align:center;font:600 13px Inter,sans-serif;color:#333;margin:0 0 6px}
  .pfoot{display:block;text-align:center;font-size:10px;color:#888;margin-top:10px}
  #score svg{break-inside:avoid;page-break-inside:avoid}
+ .chd h4 small{display:none}.chd .cc{break-inside:avoid;background:#fff;border-color:#bbb}
  .hl,.hit{display:none}
 }
+/* afinador */
+.tbig{display:flex;align-items:baseline;justify-content:center;gap:4px;margin:6px 0}
+.tbig b{font:800 72px/1 Archivo,sans-serif;color:var(--acc);min-width:1.6em;text-align:center}
+.tbig span{font:700 20px Archivo,sans-serif;color:var(--mute)}
+.meter{position:relative;height:54px;border-radius:12px;background:var(--soft);overflow:hidden;display:flex;justify-content:space-between;align-items:flex-end;padding:0 10px 4px;font-size:11px;color:var(--mute)}
+.meter .z{position:absolute;left:45%;width:10%;top:0;bottom:0;background:color-mix(in srgb,#2fb36b 22%,transparent)}
+.meter .nd{position:absolute;top:6px;bottom:18px;width:4px;margin-left:-2px;left:50%;border-radius:2px;background:var(--acc);transition:left .12s,background .12s;opacity:0}
+.meter .nd.ok{background:#2fb36b}
+.tst{text-align:center;font:700 17px Inter,sans-serif;margin:6px 0 2px;min-height:26px}
+.tst.ok{color:#2fb36b}
+.strs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.strs span{min-width:44px;text-align:center;padding:6px 8px;border-radius:10px;border:1px solid var(--line);font:800 15px Archivo,sans-serif;color:var(--mute)}
+.strs span.on{border-color:var(--acc);color:var(--acc)}.strs span.ok{border-color:#2fb36b;background:#2fb36b;color:#fff}
+/* acordes desta música */
+.chd{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}
+.chd h4{font:800 17px Archivo,sans-serif;margin:0 0 10px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.chd h4 small{font:600 12px Inter,sans-serif;color:var(--mute)}
+.chg{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.cc{display:grid;justify-items:center;gap:2px;min-height:0;height:auto;padding:8px 8px 6px;border-radius:14px;background:var(--bg);border:1px solid var(--line);color:var(--ink)}
+.cc b{font:800 19px Archivo,sans-serif}
+.cc small{font:600 11px Inter,sans-serif;color:var(--mute)}
+.cc svg{width:100%;max-width:112px;height:auto;display:block}
+.kw{fill:#fff;stroke:#444;stroke-width:1}.kbk{fill:#1d1d22}.kon{fill:#2346d6}.kbk+.kon{fill:#8fb0ff}.kon.krt{fill:#f07a2e}
 @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.push{margin-left:0}}
 @media(max-width:520px){#rec,.cntg{flex:1 1 100%}#upl,#play{flex:1 1 0;padding:0 12px}.lg{display:none}.acts button{flex:1 1 0;padding:0 8px}.cnt>button{flex:1 1 auto}}
 @media(prefers-reduced-motion:reduce){.dot{animation:none}.hl,button,.sheet,h1 em{transition:none}}
@@ -140,6 +164,7 @@ dialog form{display:grid;gap:8px}
  <div class="row">
   <div class="g"><span class="lbl">Instrumento</span><div class="seg acc" role="group" aria-label="Instrumento"><button id="iV" aria-pressed="true">Violão</button><button id="iT" aria-pressed="false">Teclado</button></div></div>
   <div class="g" id="tim" hidden><span class="lbl">Timbre</span><div class="seg" role="group" aria-label="Timbre do teclado"><button data-t="piano" aria-pressed="false">Piano</button><button data-t="orgao" aria-pressed="false">Órgão</button><button data-t="strings" aria-pressed="false">Strings</button><button data-t="pad" aria-pressed="false">Pad</button></div></div>
+  <button id="tunBtn" class="push" title="Afinador pelo microfone">🎯 Afinador</button>
  </div>
  <div class="row cap">
   <button class="pri big" id="rec"><span class="rd"></span><span id="recL">Gravar</span></button>
@@ -167,7 +192,7 @@ dialog form{display:grid;gap:8px}
 </div>
 <div class="stats"><div class="stat"><span>Tom</span><b id="kKey">–</b></div><div class="stat"><span>Andamento</span><b id="kBpm">–</b></div><div class="stat"><span>Compassos</span><b id="kBars">–</b></div><div class="stat"><span>Transposição</span><b id="kTr">0</b></div></div>
 <div class="live" id="live" hidden><span class="dot"></span><span id="lvT">0:00</span><b id="lvC">…</b><span id="lvH"></span></div>
-<div class="sheet"><h3 id="ttl">Exemplo: C – Am – F – G</h3><div class="sub" id="sub">gravação de demonstração gerada aqui mesmo · violão soa uma oitava abaixo do escrito</div><div class="pinfo" id="pinfo"></div><div id="score"></div><div class="pfoot">Partitura · duhhdragon-arch.github.io/partitura-violao</div></div>
+<div class="sheet"><h3 id="ttl">Exemplo: C – Am – F – G</h3><div class="sub" id="sub">gravação de demonstração gerada aqui mesmo · violão soa uma oitava abaixo do escrito</div><div class="pinfo" id="pinfo"></div><div id="score"></div><div class="chd" id="chd"></div><div class="pfoot">Partitura · duhhdragon-arch.github.io/partitura-violao</div></div>
 <div id="msg" role="status"></div>
 <p class="hint">Dica: toque num acorde da folha (ou num tempo vazio) para corrigir.</p>
 </div></section>
@@ -177,6 +202,15 @@ dialog form{display:grid;gap:8px}
  <span class="lbl">Tipo</span><div class="seg" id="pkQ"><button type="button" data-q="0">Maior</button><button type="button" data-q="1">Menor</button><button type="button" data-q="2">7</button><button type="button" data-q="3">m7</button></div>
  <div class="pkN"><b id="pkN">C</b><button type="button" id="pkHear">▶ Ouvir</button></div>
  <div class="acts"><button value="del">Sem acorde</button><button value="cancel" class="push">Cancelar</button><button value="ok" class="pri">Aplicar</button></div>
+</form></dialog>
+<dialog id="tun" aria-labelledby="tunT"><form method="dialog">
+ <h3 id="tunT">Afinador</h3>
+ <p class="svI">Toque uma corda (ou nota) de cada vez, perto do microfone. Referência: Lá = 440 Hz.</p>
+ <div class="tbig"><b id="tnN">–</b><span id="tnO"></span></div>
+ <div class="meter" aria-hidden="true"><i class="z"></i><i id="tnNd" class="nd"></i><span>−50</span><span>0</span><span>+50</span></div>
+ <p class="tst" id="tnS" role="status">Esperando som…</p>
+ <div class="strs" id="tnStr" aria-label="Cordas do violão"></div>
+ <div class="acts"><button value="x" class="pri push">Fechar</button></div>
 </form></dialog>
 <dialog id="sv" aria-labelledby="svT"><form method="dialog">
  <h3 id="svT">Salvar no Repertório</h3>
@@ -324,7 +358,7 @@ function render(){
    if(st.mode=='cifra'){for(let p=0;p<st.bpb;p++){const x=X(p)+2;g+=`<line x1="${x-5}" y1="${midY+6}" x2="${x+5}" y2="${midY-6}" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>`}}
    else b.notes.forEach(nt=>{const s=grand&&nt.m+st.tr+I.tr<60?SV[1]:SV[0];g+=note(X(nt.pos)+4,nt,fl,s.y,G,s.b,I.tr)})});
   out.push(`<svg viewBox="0 0 ${W} ${H}" height="${H}" style="color:var(--ink)" role="group" aria-label="Compassos ${si*per+1} a ${si*per+bs.length}">${g}</g></svg>`)});
- box.innerHTML=out.length?out.join(''):'<p>Nada reconhecido.</p>';
+ box.innerHTML=out.length?out.join(''):'<p>Nada reconhecido.</p>';renderChords(fl);
  if(st.mode=='melodia'&&!A.bars.some(b=>b.notes.length))$('msg').textContent='Nenhuma nota isolada encontrada. O modo Melodia é para notas tocadas uma de cada vez.'}
 
 // base = passo diatônico da linha de baixo da pauta (sol: E4 = 30; fá: G2 = 18); tr = semitons para escrever
@@ -476,10 +510,79 @@ function openPick(b,p){const A=st.A;if(!A||!A.bars[b])return;const fl=flatKey(A.
  pkSync();$('pk').returnValue='';$('pk').showModal()}
 function pkSync(){const fl=flatKey(st.A.key);document.querySelectorAll('#pkR button').forEach(x=>x.setAttribute('aria-pressed',+x.dataset.r==PK.r));
  document.querySelectorAll('#pkQ button').forEach(x=>x.setAttribute('aria-pressed',+x.dataset.q==PK.q));$('pkN').textContent=(fl?FL:SH)[PK.r]+Q[PK.q].s}
-function hearChord(){try{st.ctx=st.ctx||new AudioContext();st.ctx.resume();if(PK.src)try{PK.src.stop()}catch(e){}
- const root=48+PK.r,ns=[root-12,...Q[PK.q].iv.map(i=>root+12+i)],x=new Float32Array(Math.round(1.3*SR));ns.forEach(m=>kb(x,0,m,Math.round(.9*SR),.2,'piano'));
+// ---- Formas de acorde no violão (casas da 6ª à 1ª corda; -1 = não tocar, 0 = solta)
+// Abertas para os acordes comuns; o resto vira pestana na forma de Mi (tônica na 6ª) ou de Lá (tônica na 5ª), a que ficar mais perto da cabeça.
+const ABERTOS={'0:0':[-1,3,2,0,1,0],'0:2':[-1,3,2,3,1,0],'2:0':[-1,-1,0,2,3,2],'2:1':[-1,-1,0,2,3,1],'2:2':[-1,-1,0,2,1,2],'2:3':[-1,-1,0,2,1,1],
+ '4:0':[0,2,2,1,0,0],'4:1':[0,2,2,0,0,0],'4:2':[0,2,0,1,0,0],'4:3':[0,2,0,0,0,0],'7:0':[3,2,0,0,0,3],'7:2':[3,2,0,0,0,1],
+ '9:0':[-1,0,2,2,2,0],'9:1':[-1,0,2,2,1,0],'9:2':[-1,0,2,0,2,0],'9:3':[-1,0,2,0,1,0],'11:2':[-1,2,1,2,0,2]};
+const FORMA_MI=[[0,2,2,1,0,0],[0,2,2,0,0,0],[0,2,0,1,0,0],[0,2,0,0,0,0]],FORMA_LA=[[-1,0,2,2,2,0],[-1,0,2,2,1,0],[-1,0,2,0,2,0],[-1,0,2,0,1,0]];
+const CORDAS=[40,45,50,55,59,64];
+function forma(r,q){const k=r+':'+q;if(ABERTOS[k])return{f:ABERTOS[k],pest:0};
+ const fe=((r-4)%12+12)%12||12,fa=((r-9)%12+12)%12||12,e=fe<=fa;const f=e?fe:fa;
+ return{f:(e?FORMA_MI:FORMA_LA)[q].map(v=>v<0?-1:v+f),pest:f}}
+// Notas de um acorde para tocar: violão = as cordas da forma (rasgueado); teclado = baixo + acorde na região média
+const notasAcorde=(r,q)=>prof().clef=='g8'?forma(r,q).f.map((v,i)=>v<0?null:CORDAS[i]+v).filter(v=>v!==null):[48+r-12,...Q[q].iv.map(i=>60+r+i)];
+let somAcorde=null;
+function playChord(r,q){try{st.ctx=st.ctx||new AudioContext();st.ctx.resume();if(somAcorde)try{somAcorde.stop()}catch(e){}
+ const ns=notasAcorde(r,q),vio=prof().clef=='g8',tim=vio?'':(TB[st.ins]?st.ins:'piano'),x=new Float32Array(Math.round((vio?1.8:1.6)*SR));
+ ns.forEach((m,i)=>vio?pluck(x,i*Math.round(.022*SR),m,Math.round(1.6*SR),.25):kb(x,0,m,Math.round(1*SR),.2,tim));
  let mx=0;for(const v of x)mx=Math.max(mx,Math.abs(v));if(mx>0)for(let i=0;i<x.length;i++)x[i]*=.45/mx;
- const b=st.ctx.createBuffer(1,x.length,SR);b.copyToChannel(x,0);const s=st.ctx.createBufferSource();s.buffer=b;s.connect(st.ctx.destination);s.start();PK.src=s}catch(e){}}
+ const b=st.ctx.createBuffer(1,x.length,SR);b.copyToChannel(x,0);const s=st.ctx.createBufferSource();s.buffer=b;s.connect(st.ctx.destination);s.start();somAcorde=s}catch(e){}}
+function hearChord(){playChord(PK.r,PK.q)}
+
+// ---- Desenhos (SVG gerado só com números e nomes fixos)
+function svgViolao(r,q){const {f,pest}=forma(r,q),on=f.filter(v=>v>0),base=Math.max(...on)>4?Math.min(...on):1,X=i=>14+i*15,Y=j=>24+j*17;
+ let g=`<svg viewBox="0 0 106 116" role="img" aria-label="Posição no violão">`;
+ for(let i=0;i<6;i++)g+=`<line x1="${X(i)}" x2="${X(i)}" y1="${Y(0)}" y2="${Y(5)}" stroke="currentColor" stroke-width="1"/>`;
+ for(let j=0;j<=5;j++)g+=`<line x1="${X(0)}" x2="${X(5)}" y1="${Y(j)}" y2="${Y(j)}" stroke="currentColor" stroke-width="${j==0&&base==1?4:1}"/>`;
+ if(base>1)g+=`<text x="${X(5)+6}" y="${Y(0)+12}" font-size="11" font-weight="700" fill="currentColor">${base}ª</text>`;
+ if(pest&&pest>=base){const cs=f.map((v,i)=>v==pest?i:-1).filter(i=>i>=0),y=Y(pest-base)+8.5;g+=`<rect x="${X(cs[0])-5}" y="${y-5}" width="${X(cs[cs.length-1])-X(cs[0])+10}" height="10" rx="5" fill="currentColor"/>`}
+ f.forEach((v,i)=>{if(v<0)g+=`<text x="${X(i)}" y="${Y(0)-6}" font-size="11" text-anchor="middle" fill="currentColor">×</text>`;
+  else if(v==0)g+=`<circle cx="${X(i)}" cy="${Y(0)-9}" r="3.6" fill="none" stroke="currentColor" stroke-width="1.3"/>`;
+  else if(v!=pest)g+=`<circle cx="${X(i)}" cy="${Y(v-base)+8.5}" r="5.4" fill="currentColor"/>`});
+ return g+'</svg>'}
+function svgTeclado(r,q){const WW=8,BW=5.4,on=new Set(Q[q].iv.map(i=>r+i)),WI=[0,0,1,1,2,3,3,4,4,5,5,6],BL={1:0,3:1,6:3,8:4,10:5};
+ let w='',b='';for(let s=0;s<24;s++){const o=Math.floor(s/12),pc=s%12;
+  if(!(pc in BL)){const x=(o*7+WI[pc])*WW;w+=`<rect class="kw" x="${x}" y="0" width="${WW}" height="44"/>`;if(on.has(s))w+=`<circle class="kon${s==r?' krt':''}" cx="${x+WW/2}" cy="36" r="3.6"/>`}
+  else{const x=(o*7+BL[pc]+1)*WW-BW/2;b+=`<rect class="kbk" x="${x}" y="0" width="${BW}" height="27"/>`;if(on.has(s))b+=`<circle class="kon${s==r?' krt':''}" cx="${x+BW/2}" cy="21" r="2.6"/>`}}
+ return`<svg viewBox="-1 -1 114 47" role="img" aria-label="Teclas do acorde">${w}${b}</svg>`}
+// Quadro "Acordes desta música": um cartão por acorde diferente, na ordem em que aparecem (já transpostos)
+function renderChords(fl){const A=st.A,box=$('chd');if(!A)return;const vist=new Set(),L=[];
+ A.bars.forEach(b=>b.ch.forEach(c=>{if(!c.t)return;const r=(c.t.r+st.tr+120)%12,k=r+':'+c.t.qi;if(!vist.has(k)){vist.add(k);L.push([r,c.t.qi])}}));
+ if(!L.length){box.innerHTML='';return}const vio=prof().clef=='g8',N=fl?FL:SH;
+ box.innerHTML=`<h4>Acordes desta música <small>${vio?'posição no violão':'teclas no teclado (laranja = tônica)'} · toque para ouvir</small></h4><div class="chg">`+
+  L.map(([r,q])=>`<button type="button" class="cc" data-r="${r}" data-q="${q}" aria-label="Ouvir ${N[r]+Q[q].s}"><b>${N[r]+Q[q].s}</b>${vio?svgViolao(r,q):svgTeclado(r,q)}<small>${Q[q].iv.map(i=>N[(r+i)%12]).join(' · ')}</small></button>`).join('')+'</div>'}
+$('chd').addEventListener('click',e=>{const c=e.target.closest('.cc');if(c)playChord(+c.dataset.r,+c.dataset.q)});
+
+// ---- Afinador: YIN (de Cheveigné & Kawahara, 2002). Acha o período pela "função diferença" do sinal com ele
+// mesmo atrasado, normalizada; interpola entre amostras para ter precisão de cents. Faixa: 38–1200 Hz.
+function yin(x,sr){const W=x.length>>1,lo=Math.floor(sr/1200),hi=Math.min(W-2,Math.ceil(sr/38));let e=0;for(let i=0;i<x.length;i++)e+=x[i]*x[i];if(Math.sqrt(e/x.length)<.008)return null;
+ const d=new Float32Array(hi+2);for(let l=1;l<=hi+1;l++){let s=0;for(let i=0;i<W;i++){const v=x[i]-x[i+l];s+=v*v}d[l]=s}
+ const c=new Float32Array(hi+2);c[0]=1;let run=0;for(let l=1;l<=hi+1;l++){run+=d[l];c[l]=run?d[l]*l/run:1}
+ let L=-1;for(let l=lo;l<=hi;l++)if(c[l]<.12){while(l+1<=hi&&c[l+1]<c[l])l++;L=l;break}
+ if(L<0){let m=1;for(let l=lo;l<=hi;l++)if(c[l]<m){m=c[l];L=l}if(m>.3)return null}
+ const a=c[L-1],b=c[L],g=c[L+1],den=a-2*b+g,p=den?L+(a-g)/(2*den):L;return{f:sr/p,conf:1-b}}
+const TUN={on:false,hist:[]};
+const NOMES_CORDA=['E2','A2','D3','G3','B3','E4'];
+$('tnStr').innerHTML=CORDAS.map((m,i)=>`<span data-m="${m}">${NOMES_CORDA[i]}</span>`).join('');
+async function tunOpen(){if(R.on){$('msg').textContent='Pare a gravação antes de abrir o afinador.';return}
+ $('tnN').textContent='–';$('tnO').textContent='';$('tnS').textContent='Pedindo o microfone…';$('tnS').className='tst';$('tnNd').style.opacity=0;$('tun').showModal();
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('tnS').textContent='Este navegador não deixa usar o microfone aqui.';return}
+ try{TUN.ms=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})}catch(e){$('tnS').textContent='Microfone bloqueado. Libere nas permissões do navegador.';return}
+ if(!$('tun').open){tunStop();return}
+ TUN.ctx=new AudioContext();await TUN.ctx.resume();TUN.an=TUN.ctx.createAnalyser();TUN.an.fftSize=4096;TUN.ctx.createMediaStreamSource(TUN.ms).connect(TUN.an);
+ TUN.buf=new Float32Array(TUN.an.fftSize);TUN.on=true;TUN.hist=[];TUN.quiet=0;$('tnS').textContent='Esperando som…';TUN.iv=setInterval(tunTick,90)}
+function tunStop(){TUN.on=false;clearInterval(TUN.iv);if(TUN.ms)TUN.ms.getTracks().forEach(t=>t.stop());TUN.ms=null;if(TUN.ctx)TUN.ctx.close().catch(()=>{});TUN.ctx=null} // desliga o microfone de verdade
+function tunTick(){if(!TUN.on)return;TUN.an.getFloatTimeDomainData(TUN.buf);const r=yin(TUN.buf,TUN.ctx.sampleRate);
+ if(!r||r.conf<.85){if(++TUN.quiet>12){TUN.hist=[];$('tnNd').style.opacity=.25;$('tnS').textContent='Esperando som…';$('tnS').className='tst'}return}
+ TUN.quiet=0;const n=69+12*Math.log2(r.f/440);TUN.hist.push(n);if(TUN.hist.length>5)TUN.hist.shift();
+ const s=[...TUN.hist].sort((a,b)=>a-b),med=s[s.length>>1];if(Math.abs(n-med)>.5)return; // ignora leitura solta (ataque da corda, harmônico)
+ const m=Math.round(med),ct=Math.round((med-m)*100),ok=Math.abs(ct)<=5;
+ $('tnN').textContent=SH[(m%12+12)%12];$('tnO').textContent=Math.floor(m/12)-1;
+ const nd=$('tnNd');nd.style.opacity=1;nd.style.left=(50+Math.max(-50,Math.min(50,ct)))+'%';nd.classList.toggle('ok',ok);
+ $('tnS').textContent=ok?'Afinado ✓':ct<0?`${-ct} cents abaixo: aperte (suba)`:`${ct} cents acima: afrouxe (desça)`;$('tnS').className='tst'+(ok?' ok':'');
+ document.querySelectorAll('#tnStr span').forEach(x=>{const d=Math.abs(+x.dataset.m-med);x.className=d<.5?(ok?'ok':'on'):''})}
+$('tunBtn').addEventListener('click',tunOpen);$('tun').addEventListener('close',tunStop);
 function applyPick(v){const bar=st.A.bars[PK.b];if(!bar)return;const i=bar.ch.findIndex(c=>c.pos==PK.p);
  if(v=='ok'){const c={pos:PK.p,t:{r:((PK.r-st.tr)%12+12)%12,qi:PK.q},ed:true};if(i>=0)bar.ch[i]=c;else{bar.ch.push(c);bar.ch.sort((a,b)=>a.pos-b.pos)}}
  else{if(i>=0)bar.ch.splice(i,1);if(PK.p==0)bar.ch.unshift({pos:0,t:null,ed:true})}
