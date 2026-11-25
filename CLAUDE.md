@@ -16,7 +16,9 @@ App web que escuta **violão ou teclado** (microfone ao vivo ou arquivo de áudi
 | `README.md` | Descrição curta do repositório |
 | `.nojekyll` | Faz o GitHub Pages servir os arquivos como estão |
 
-Fontes externas: Google Fonts (Archivo, Inter, Noto Music, esta usada para a clave 𝄞). Nenhuma outra dependência.
+| `fonts.css` + `fonts/` | Fontes hospedadas no próprio site (woff2 + licenças OFL) |
+
+**Nenhuma requisição externa** (desde 25/11/2026). As fontes (Archivo e Inter, variáveis; Noto Music para as claves 𝄞 𝄢) foram baixadas do Google Fonts e ficam em `fonts/`. Só estão os subconjuntos latin e latin-ext; da Noto Music, só o subconjunto "music". Motivo: com o Google Fonts, cada visita mandava o IP do visitante ao Google. As licenças OFL (`fonts/OFL-*.txt`) precisam acompanhar as fontes. Para conferir: servir por http local e listar `performance.getEntriesByType("resource")` fora da origem (deve sair vazio).
 
 ## Como rodar localmente
 Microfone exige https ou `localhost`. Para testar:
