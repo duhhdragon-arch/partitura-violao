@@ -65,6 +65,7 @@ button:focus-visible,.file:focus-within{outline:3px solid var(--acc);outline-off
 .live b{font:800 clamp(44px,8vw,72px)/1 Archivo,sans-serif;min-width:2.2em;color:var(--acc)}
 .live #lvT{font:600 15px Inter,sans-serif;font-variant-numeric:tabular-nums;opacity:.8}
 .live #lvH{font:600 16px Archivo,sans-serif;opacity:.6;overflow:hidden;white-space:nowrap;flex:1 1 200px;mask:linear-gradient(to right,transparent,#000 25%)}
+.bts{display:flex;gap:7px}.bts i{width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,.16);transition:background .06s}.bts i.on{background:var(--acc)}.bts i.on:first-child{background:#fff;box-shadow:0 0 0 3px var(--acc)}
 .dot{width:14px;height:14px;border-radius:50%;background:#ff4b3e;animation:pu 1s infinite}
 @keyframes pu{50%{opacity:.3}}
 /* folha */
@@ -170,8 +171,9 @@ dialog form{display:grid;gap:8px}
   <button class="pri big" id="rec"><span class="rd"></span><span id="recL">Gravar</span></button>
   <label class="file big" id="upl">↑ Enviar<span class="lg">gravação</span><input type="file" id="f" accept="audio/*,video/*"></label>
   <button class="big" id="play" disabled>▶ Ouvir</button>
-  <div class="g cntg"><span class="lbl">Contagem antes de gravar</span><div class="cnt">
+  <div class="g cntg"><span class="lbl">Contagem e metrônomo</span><div class="cnt">
    <button id="cOn" class="tog" aria-pressed="true" title="Contar 1-2-3-4 antes de gravar">1·2·3·4</button>
+   <button id="cMet" class="tog" aria-pressed="false" title="Continua marcando o tempo durante a gravação">♩ Metrônomo</button>
    <div class="seg"><button id="cDn" aria-label="Mais lento">−</button><input id="cBpm" type="number" inputmode="numeric" min="40" max="200" value="80" aria-label="Andamento da contagem em bpm"><span class="u">bpm</span><button id="cUp" aria-label="Mais rápido">+</button></div>
    <button id="cTap" title="Bata no ritmo da música algumas vezes">Bater ritmo</button>
   </div></div>
@@ -191,7 +193,7 @@ dialog form{display:grid;gap:8px}
  </div>
 </div>
 <div class="stats"><div class="stat"><span>Tom</span><b id="kKey">–</b></div><div class="stat"><span>Andamento</span><b id="kBpm">–</b></div><div class="stat"><span>Compassos</span><b id="kBars">–</b></div><div class="stat"><span>Transposição</span><b id="kTr">0</b></div></div>
-<div class="live" id="live" hidden><span class="dot"></span><span id="lvT">0:00</span><b id="lvC">…</b><span id="lvH"></span></div>
+<div class="live" id="live" hidden><span class="dot"></span><span id="lvT">0:00</span><span class="bts" id="lvB" hidden aria-hidden="true"></span><b id="lvC">…</b><span id="lvH"></span></div>
 <div class="sheet"><h3 id="ttl">Exemplo: C – Am – F – G</h3><div class="sub" id="sub">gravação de demonstração gerada aqui mesmo · violão soa uma oitava abaixo do escrito</div><div class="pinfo" id="pinfo"></div><div id="score"></div><div class="chd" id="chd"></div><div class="pfoot">Partitura · duhhdragon-arch.github.io/partitura-violao</div></div>
 <div id="msg" role="status"></div>
 <p class="hint">Dica: toque num acorde da folha (ou num tempo vazio) para corrigir.</p>
@@ -254,18 +256,18 @@ function frames(x){
  const nF=Math.max(1,Math.floor((x.length-N)/HOP)+1),lo=Math.floor(55*N/SR),hi=Math.ceil(1760*N/SR);
  const pc=new Int8Array(hi+1),w=new Float32Array(hi+1);
  for(let k=lo;k<=hi;k++){const m=69+12*Math.log2(k*SR/N/440),r=Math.round(m);pc[k]=((r%12)+12)%12;w[k]=Math.cos((m-r)*Math.PI)**2}
- const chroma=[],rms=new Float32Array(nF),flux=new Float32Array(nF),pitch=new Int16Array(nF).fill(-1);
+ const chroma=[],rms=new Float32Array(nF),band=new Float32Array(nF),flux=new Float32Array(nF),pitch=new Int16Array(nF).fill(-1);
  const re=new Float32Array(N),im=new Float32Array(N),mag=new Float32Array(N/2),prev=new Float32Array(hi+1);
  for(let f=0;f<nF;f++){const o=f*HOP;let s=0;for(let i=0;i<N;i++){const v=x[o+i]||0;s+=v*v;re[i]=v*win[i];im[i]=0}rms[f]=Math.sqrt(s/N);fft(re,im);
   for(let k=0;k<N/2;k++)mag[k]=Math.hypot(re[k],im[k]);
   const c=new Float32Array(12);let fl=0,tot=0;
   for(let k=lo;k<=hi;k++){const lm=Math.log1p(mag[k]*10),d=lm-prev[k];if(d>0)fl+=d;prev[k]=lm;c[pc[k]]+=mag[k]*w[k];tot+=mag[k]}
-  flux[f]=fl;chroma.push(c);
+  flux[f]=fl;band[f]=tot;chroma.push(c);
   const sal=m=>{const f0=440*2**((m-69)/12);let sa=0;for(let h=1;h<=6;h++){const k=Math.round(h*f0*N/SR);if(k+1>=N/2)break;sa+=Math.max(mag[k-1],mag[k],mag[k+1])/Math.sqrt(h)}return sa};
   let best=0,bm=-1;for(let m=P.lo;m<=P.hi;m++){const sa=sal(m);if(sa>best){best=sa;bm=m}}
   if(bm>0)for(const d of[24,19,12])if(bm-d>=P.lo&&sal(bm-d)>=.75*best){bm-=d;break}
   if(tot>0&&best/tot>.06)pitch[f]=bm}
- return{chroma,rms,flux,pitch,nF}}
+ return{chroma,rms,band,flux,pitch,nF}}
 
 function beatsOf(F){
  const P=prof(),o=F.flux,n=o.length,e=new Float32Array(n);
@@ -281,26 +283,50 @@ function beatsOf(F){
  for(let l=lo;l<r.length;l++){let s=0;for(let i=0;i+l<n;i++)s+=e[i]*e[i+l];r[l]=s/Math.max(1,n-l)}
  // Pente: com wC>0 também conta a periodicidade em 2 batidas e em 1 compasso (trocas de acorde por compasso)
  let L=0,best=-1;for(let l=lo;l<=hi;l++){let s=r[l]+(P.wC>0?.5*r[2*l]+.5*r[st.bpb*l]:0);const bpm=60*FPS/l;s*=Math.exp(-.5*(Math.log2(bpm/105)/.9)**2);if(s>best){best=s;L=l}}
- // Gravou com contagem: o andamento é conhecido, não precisa adivinhar (o rastreador ainda acompanha pequenas variações)
+ // Gravou com contagem: o andamento de partida é conhecido, não precisa adivinhar
  if(st.grid)L=FPS*60/st.grid.bpm;
  L*=st.lagMul;L=Math.max(6,Math.min(L,FPS*2.4));
- const cs=new Float32Array(n),bp=new Int32Array(n).fill(-1);
- for(let t=0;t<n;t++){let bv=-1e9,bi=-1;for(let p=Math.max(0,t-Math.round(2*L));p<=t-Math.round(L/2);p++){const v=cs[p]-400*Math.log((t-p)/L)**2;if(v>bv){bv=v;bi=p}}
-  if(bi>=0&&bv>0){cs[t]=e[t]+bv;bp[t]=bi}else cs[t]=e[t]}
- let t=n-1,bv=-1;for(let i=Math.max(0,n-Math.round(L));i<n;i++)if(cs[i]>bv){bv=cs[i];t=i}
- const b=[];while(t>=0){b.push(t);t=bp[t]}b.reverse();
- const d=b.slice(1).map((v,i)=>v-b[i]).sort((a,c)=>a-c);const per=d.length?d[d.length>>1]:L;
- while(b[0]-per>=0)b.unshift(b[0]-per);
+ const b=[];
+ if(st.grid&&st.grid.met){
+  // Metrônomo ligado o tempo todo: o andamento não muda, então o rastreador fica preso a ele (Ellis 2007)
+  const cs=new Float32Array(n),bp=new Int32Array(n).fill(-1);
+  for(let t=0;t<n;t++){let bv=-1e9,bi=-1;for(let p=Math.max(0,t-Math.round(2*L));p<=t-Math.round(L/2);p++){const v=cs[p]-400*Math.log((t-p)/L)**2;if(v>bv){bv=v;bi=p}}
+   if(bi>=0&&bv>0){cs[t]=e[t]+bv;bp[t]=bi}else cs[t]=e[t]}
+  let t=n-1,bv=-1;for(let i=Math.max(0,n-Math.round(L));i<n;i++)if(cs[i]>bv){bv=cs[i];t=i}
+  while(t>=0){b.push(t);t=bp[t]}
+ }else{
+  // Sem metrônomo, quem toca acelera e desacelera. O estado é (quadro, intervalo da última batida): o intervalo pode mudar
+  // aos poucos de uma batida para a outra (custo LAM por mudança) e paga pouco (MU) por se afastar do andamento inicial.
+  // Pad/strings/órgão quase só têm "ataque" quando o acorde muda: aí o passo é o compasso inteiro (U tempos), dividido igual.
+  const U=P.wC>=1?st.bpb:1,Lu=L*U;
+  const pA=Math.max(6,Math.round(Lu*.78)),pB=Math.round(Lu*1.3),NP=pB-pA+1,LAM=60,MU=U>1?10:st.grid?4:2;
+  const D=new Float32Array(n*NP),bk=new Int16Array(n*NP).fill(-1),lg=new Float32Array(NP),pr=new Float32Array(NP);
+  for(let j=0;j<NP;j++){lg[j]=Math.log(pA+j);pr[j]=MU*Math.log((pA+j)/Lu)**2}
+  for(let t=0;t<n;t++)for(let j=0;j<NP;j++){const tp=t-pA-j;let bv=0,bj=-1;
+   if(tp>=0){const o=tp*NP;for(let q=0;q<NP;q++){const v=D[o+q]-LAM*(lg[j]-lg[q])**2;if(v>bv){bv=v;bj=q}}}
+   D[t*NP+j]=e[t]-pr[j]+bv;bk[t*NP+j]=bj}
+  let t=n-1,j=0,bv=-1e9;for(let i=Math.max(0,n-Math.round(Lu));i<n;i++)for(let q=0;q<NP;q++)if(D[i*NP+q]>bv){bv=D[i*NP+q];t=i;j=q}
+  const u=[];while(t>=0&&j>=0){u.push(t);const q=bk[t*NP+j];t-=pA+j;j=q}
+  u.reverse();
+  for(let i=0;i<u.length;i++){const w=i+1<u.length?u[i+1]-u[i]:0;b.push(u[i]);for(let k=1;w&&k<U;k++)b.push(Math.round(u[i]+k*w/U))}
+  b.reverse();
+ }
+ b.reverse();
+ // Andamento mostrado = média da música (quem acelera e desacelera fica com o andamento médio)
+ const per=b.length>1?(b[b.length-1]-b[0])/(b.length-1):L;
+ // Completa para trás com o intervalo das primeiras batidas (não o do meio da música)
+ const p0=b.length>1?b[1]-b[0]:per;while(b[0]-p0>=0)b.unshift(b[0]-p0);
  return{beats:b,per,bpm:Math.round(60*FPS/per)}}
 
 function analyse(){
  const F=st.F,{beats,per,bpm}=beatsOf(F),n=F.nF;
- let mx=0;for(const v of F.rms)mx=Math.max(mx,v);const thr=mx*.06;
+ let mx=0,mb=0;for(const v of F.rms)mx=Math.max(mx,v);for(const v of F.band)mb=Math.max(mb,v);const thr=mx*.06,thrB=mb*.04;
  const em=[],sil=[];
  // Timbres lentos (wC ≥ 1): o acorde novo demora a crescer, então ignora os primeiros 40% de cada batida
  const skip=prof().wC>=1?.4:0;
- beats.forEach((b,i)=>{const e=Math.min(n,i+1<beats.length?beats[i+1]:b+per);const c=new Float32Array(12);let r=0;const f0=b+Math.floor((e-b)*skip);for(let f=f0;f<e;f++){for(let k=0;k<12;k++)c[k]+=F.chroma[f][k];r+=F.rms[f]}r/=Math.max(1,e-f0);
-  const q=r<thr;sil.push(q);let m=Math.max(...c)||1;const cn=c.map(v=>v/m);
+ beats.forEach((b,i)=>{const e=Math.min(n,i+1<beats.length?beats[i+1]:b+per);const c=new Float32Array(12);let r=0;const f0=b+Math.floor((e-b)*skip);let rb=0;for(let f=f0;f<e;f++){for(let k=0;k<12;k++)c[k]+=F.chroma[f][k];r+=F.rms[f];rb+=F.band[f]}r/=Math.max(1,e-f0);rb/=Math.max(1,e-f0);
+  // Silêncio: pouca energia no total ou na faixa dos acordes (o clique agudo do metrônomo sozinho conta como silêncio)
+  const q=r<thr||rb<thrB;sil.push(q);let m=Math.max(...c)||1;const cn=c.map(v=>v/m);
   const nn=Math.hypot(...cn)||1;em.push(TPL.map(t=>{let s=0;for(let k=0;k<12;k++)s+=t.v[k]*cn[k];return s/nn+t.b}).concat([q?1.2:0]))});
  const S=TPL.length+1,P=prof().pen;let sc=em[0]?em[0].slice():[],bk=[];
  for(let i=1;i<em.length;i++){let bi=0;for(let s=1;s<S;s++)if(sc[s]>sc[bi])bi=s;const ns=[],nb=[];for(let s=0;s<S;s++){const sw=sc[bi]-P;if(sc[s]>=sw){ns.push(sc[s]+em[i][s]);nb.push(s)}else{ns.push(sw+em[i][s]);nb.push(bi)}}sc=ns;bk.push(nb)}
@@ -385,18 +411,25 @@ async function recStart(){
  let ms;try{ms=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})}catch(e){$('msg').textContent='Microfone bloqueado. Libere o acesso nas permissões do navegador (dentro do Claude ele não funciona: use o site).';return}
  stop();const ctx=new AudioContext();await ctx.resume();const src=ctx.createMediaStreamSource(ms),sp=ctx.createScriptProcessor(4096,1,1),mute=ctx.createGain();mute.gain.value=0;
  // Contagem: agenda os cliques no relógio do áudio (preciso) e só guarda o som a partir de PRE s antes do fim da contagem
- const bpm=st.cnt.on?st.cnt.bpm:0,spb=bpm?60/bpm:0,t1=ctx.currentTime+.2,cEnd=bpm?t1+st.bpb*spb:0;
+ const met=st.cnt.on&&st.cnt.met,bpm=st.cnt.on?st.cnt.bpm:0,spb=bpm?60/bpm:0,t1=ctx.currentTime+.2,cEnd=bpm?t1+st.bpb*spb:0;
  if(bpm)for(let i=0;i<st.bpb;i++){clickAt(ctx,t1+i*spb,i==0);setTimeout(()=>{if(R.on&&R.cut)$('lvC').textContent=i+1},Math.max(0,(t1+i*spb-ctx.currentTime)*1000))}
- R={on:true,ctx,ms,sp,src,chunks:[],len:0,rate:ctx.sampleRate,hist:[],last:'',t0:performance.now()+Math.max(0,cEnd-ctx.currentTime)*1000,cut:bpm?cEnd-PRE:0,grid:bpm};
+ R={on:true,ctx,ms,sp,src,chunks:[],len:0,rate:ctx.sampleRate,hist:[],last:'',t0:performance.now()+Math.max(0,cEnd-ctx.currentTime)*1000,cut:bpm?cEnd-PRE:0,grid:bpm,met};
+ // Metrônomo: agendador com folga (o setInterval só acorda; quem marca a hora exata é o relógio do áudio)
+ if(met){let k=st.bpb;R.mt=setInterval(()=>{while(t1+k*spb<ctx.currentTime+.15){clickAt(ctx,t1+k*spb,k%st.bpb==0,.7);k++}},40)}
+ // Bolinhas dos tempos: acompanham a contagem e, com metrônomo, a gravação inteira
+ const bx=$('lvB');bx.innerHTML='<i></i>'.repeat(st.bpb);bx.hidden=!bpm;
+ if(bpm){const dots=[...bx.children];const pulse=()=>{if(!R.on)return;const i=Math.floor((ctx.currentTime-t1)/spb);
+  if(!met&&i>=st.bpb){bx.hidden=true;return}dots.forEach((d,j)=>d.classList.toggle('on',i>=0&&j==i%st.bpb));R.raf=requestAnimationFrame(pulse)};pulse()}
  sp.onaudioprocess=e=>{if(!R.on)return;let d=new Float32Array(e.inputBuffer.getChannelData(0));
   if(R.cut){const tE=ctx.currentTime,tS=tE-d.length/R.rate;if(tE<=R.cut)return;if(tS<R.cut)d=d.slice(Math.floor((R.cut-tS)*R.rate));R.cut=0;$('lvH').textContent='';$('lvC').textContent='…'}
   R.chunks.push(d);R.len+=d.length;if(R.len>R.rate*240)recStop()};
  src.connect(sp);sp.connect(mute);mute.connect(ctx.destination);
  $('recL').textContent='Parar';$('rec').classList.add('on');$('live').hidden=false;$('lvC').textContent=bpm?'':'…';$('lvH').textContent=bpm?'contagem: comece a tocar no próximo 1':'';
- $('msg').textContent=bpm?`Contando ${st.bpb} tempos a ${bpm} bpm. Comece a tocar logo depois.`:'Ouvindo. Toque a música e aperte Parar no fim.';
+ $('msg').textContent=bpm?`Contando ${st.bpb} tempos a ${bpm} bpm. Comece a tocar logo depois.${met?' O metrônomo continua até você parar.':''}`:'Ouvindo. Toque a música e aperte Parar no fim.';
  R.iv=setInterval(liveTick,350)}
-function clickAt(ctx,t,acc){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=acc?1760:1175;o.type='triangle';
- g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(acc?.6:.4,t+.002);g.gain.exponentialRampToValueAtTime(.001,t+.06);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.08)}
+// O clique é agudo (2–2,6 kHz), acima da faixa que a análise escuta (55–1760 Hz): se vazar no microfone, não vira acorde
+function clickAt(ctx,t,acc,v=1){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=acc?2637:2093;o.type='sine';
+ g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime((acc?.6:.4)*v,t+.005);g.gain.exponentialRampToValueAtTime(.001,t+.06);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.08)}
 function tail(sec){const need=Math.round(sec*R.rate),out=new Float32Array(Math.min(need,R.len));let k=out.length;for(let i=R.chunks.length-1;i>=0&&k>0;i--){const c=R.chunks[i],n=Math.min(k,c.length);out.set(c.subarray(c.length-n),k-n);k-=n}return out}
 function rs(x,from){if(from==SR)return x;const r=from/SR,n=Math.floor(x.length/r),y=new Float32Array(n);for(let i=0;i<n;i++){const p=i*r,a=Math.floor(p),f=p-a;y[i]=(x[a]||0)*(1-f)+(x[a+1]||0)*f}return y}
 function liveTick(){if(R.cut)return;const s=Math.max(0,Math.floor((performance.now()-R.t0)/1000));$('lvT').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
@@ -405,11 +438,11 @@ function liveTick(){if(R.cut)return;const s=Math.max(0,Math.floor((performance.n
  let bi=0,bv=-9;TPL.forEach((t,i)=>{let s2=0;for(let k=0;k<12;k++)s2+=t.v[k]*cn[k];s2=s2/nn+t.b;if(s2>bv){bv=s2;bi=i}});
  const t=TPL[bi],name=SH[t.r]+Q[t.qi].s;if(name===R.cand)R.cnt++;else{R.cand=name;R.cnt=1}
  if(R.cnt>=2&&name!==R.last){R.last=name;R.hist.push(name);$('lvC').textContent=name;$('lvH').textContent=R.hist.slice(-12).join('  ')}}
-async function recStop(){if(!R.on)return;R.on=false;clearInterval(R.iv);R.ms.getTracks().forEach(t=>t.stop());try{R.sp.disconnect();R.src.disconnect()}catch(e){}
+async function recStop(){if(!R.on)return;R.on=false;clearInterval(R.iv);clearInterval(R.mt);cancelAnimationFrame(R.raf);$('lvB').hidden=true;R.ms.getTracks().forEach(t=>t.stop());try{R.sp.disconnect();R.src.disconnect()}catch(e){}
  $('recL').textContent='Gravar';$('rec').classList.remove('on');$('live').hidden=true;
  if(R.len<R.rate*2){$('msg').textContent='Gravação curta demais. Toque pelo menos alguns compassos.';return}
  const all=new Float32Array(R.len);let o=0;for(const c of R.chunks){all.set(c,o);o+=c.length}
- $('ttl').textContent='Gravação de '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});st.demo=false;st.grid=R.grid?{bpm:R.grid}:null;setSub(R.grid?`gravado com contagem a ${R.grid} bpm · `:'gravado pelo microfone · ');
+ $('ttl').textContent='Gravação de '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});st.demo=false;st.grid=R.grid?{bpm:R.grid,met:R.met}:null;setSub(R.grid?`gravado com ${R.met?'metrônomo':'contagem'} a ${R.grid} bpm · `:'gravado pelo microfone · ');
  try{const b=new AudioBuffer({length:all.length,sampleRate:R.rate,numberOfChannels:1});b.copyToChannel(all,0);const oc=new OfflineAudioContext(1,Math.ceil(b.duration*SR),SR),s=oc.createBufferSource();s.buffer=b;s.connect(oc.destination);s.start();run((await oc.startRendering()).getChannelData(0))}catch(e){run(rs(all,R.rate))}
  R.ctx.close()}
 async function load(file){
@@ -489,9 +522,11 @@ if(st.ins!='violao')st.lastKb=st.ins;
 
 // ---- Contagem: liga/desliga, bpm (40–200) e "bater ritmo". Fica salva no aparelho; o valor salvo é validado antes de usar.
 const clampB=v=>{v=Math.round(+v);return Number.isFinite(v)?Math.min(200,Math.max(40,v)):80};
-st.cnt={on:true,bpm:80};try{const o=JSON.parse(localStorage.getItem('partitura.cnt')||'null');if(o&&typeof o=='object')st.cnt={on:o.on!==false,bpm:clampB(o.bpm)}}catch(e){}
-function cntSync(){$('cOn').setAttribute('aria-pressed',st.cnt.on);$('cBpm').value=st.cnt.bpm;try{localStorage.setItem('partitura.cnt',JSON.stringify(st.cnt))}catch(e){}}
+st.cnt={on:true,bpm:80,met:false};try{const o=JSON.parse(localStorage.getItem('partitura.cnt')||'null');if(o&&typeof o=='object')st.cnt={on:o.on!==false,bpm:clampB(o.bpm),met:o.met===true}}catch(e){}
+function cntSync(){$('cOn').setAttribute('aria-pressed',st.cnt.on);$('cMet').setAttribute('aria-pressed',st.cnt.on&&st.cnt.met);$('cBpm').value=st.cnt.bpm;try{localStorage.setItem('partitura.cnt',JSON.stringify(st.cnt))}catch(e){}}
 $('cOn').addEventListener('click',()=>{st.cnt.on=!st.cnt.on;cntSync()});
+// Metrônomo usa o bpm da contagem; ligar o metrônomo liga a contagem junto
+$('cMet').addEventListener('click',()=>{const v=!(st.cnt.on&&st.cnt.met);st.cnt.met=v;if(v)st.cnt.on=true;cntSync()});
 $('cDn').addEventListener('click',()=>{st.cnt.bpm=clampB(st.cnt.bpm-1);cntSync()});$('cUp').addEventListener('click',()=>{st.cnt.bpm=clampB(st.cnt.bpm+1);cntSync()});
 $('cBpm').addEventListener('change',e=>{st.cnt.bpm=clampB(e.target.value);cntSync()});
 let taps=[];$('cTap').addEventListener('click',()=>{const t=performance.now();if(taps.length&&t-taps[taps.length-1]>2000)taps=[];taps.push(t);taps=taps.slice(-6);

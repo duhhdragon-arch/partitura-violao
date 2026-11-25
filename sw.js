@@ -10,7 +10,7 @@
 // por origin, não por pasta. Por isso cada app só apaga caches com o PRÓPRIO prefixo.
 // Mudar CACHE só quando a lista ARQUIVOS mudar (arquivo novo ou removido).
 const PREFIXO = 'partitura-';
-const CACHE = PREFIXO + 'v1';
+const CACHE = PREFIXO + 'v2';
 const ARQUIVOS = [
   './', './manifest.json', './icon.svg', './fonts.css',
   './fonts/archivo-latin.woff2', './fonts/archivo-latin-ext.woff2',
