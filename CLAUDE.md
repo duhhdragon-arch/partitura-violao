@@ -29,6 +29,8 @@ Abrir `http://localhost:8000`. No celular, testar pelo site do GitHub Pages (htt
 
 ## Funcionalidades
 - **Instrumento**: Violão | Teclado (timbres Piano, Órgão, Strings, Pad). A escolha fica em `localStorage` (`partitura.ins`), validada contra a lista `INS` antes de usar. Trocar de instrumento refaz a demo, ou reanalisa a gravação atual com o novo perfil.
+- **Contagem antes de gravar** (25/11/2026): liga/desliga (`1·2·3·4`), bpm 40–200 com −/+, campo numérico e "Bater ritmo" (tap tempo, média dos últimos 6 toques, zera após 2 s parado). Fica em `localStorage` (`partitura.cnt`, JSON validado com `clampB`). Ao gravar, os cliques são agendados no relógio do `AudioContext` (`clickAt`, mais preciso que `setTimeout`). O áudio só é guardado a partir de `PRE = 0,12 s` antes do fim da contagem (`R.cut`). Com isso `st.grid = {bpm}`: `beatsOf` usa esse andamento em vez da autocorrelação, e `analyse` põe o tempo 1 na batida mais próxima de `PRE`, mesmo se ele entrar atrasado (aparece "—"). Arquivo enviado e demo zeram `st.grid`.
+- **Corrigir acorde** (25/11/2026): cada tempo da folha tem um `<rect class="hit">` (clicável e focável por teclado, Enter/Espaço) que abre o `<dialog id="pk">`: 12 notas (♯ ou ♭ conforme o tom), tipo (maior, menor, 7, m7), prévia sonora com piano sintetizado e os botões "Sem acorde", Cancelar e Aplicar. `PK.r` é a nota como aparece na tela; ao salvar desconta `st.tr`. O acorde corrigido ganha `ed:true` e aparece na cor de destaque. `st.edits` conta as correções; ½×, 2×, 3/4 e troca de instrumento **perguntam antes** (`keepEdits`), porque reanalisar apaga as correções.
 - **● Gravar / ■ Parar**: microfone ao vivo. Enquanto grava, mostra o acorde atual grande e o histórico. Ao parar, analisa a gravação inteira e monta a partitura. Limite: 4 min.
 - **Enviar gravação**: aceita `audio/*` e `video/*` (MP3, M4A, WAV, MP4…). Analisa os primeiros 4 min.
 - **▶ Ouvir**: toca o áudio e destaca o compasso atual na pauta.
@@ -92,6 +94,10 @@ Testado em Node com stubs de DOM:
 - Microfone simulado a 48 kHz: acorde ao vivo funcionando. Na transição entre acordes pode mostrar um intermediário (ex.: Am7).
 - Teclado (25/11/2026): demos de piano, órgão, strings e pad, todas com C–Am–F–G, tom C maior, 96 bpm e 8 compassos. Antes do corte de cauda e do pulo de 40%, pad dava "F G" no 4º compasso e um compasso extra no fim. Tempo no Node: demo < 0,4 s, análise ~0,3 s. **No teste, carregar o script com `(0,eval)(js)` (eval indireto). Com `eval` direto o V8 não otimiza e tudo fica ~10× mais lento.**
 - Pauta dupla conferida com screenshot no Chrome headless.
+- Demo com aleatório de semente fixa (`rnd()`, `seed=20261125` em `demo()`), então sai sempre igual. Antes, com `Math.random`, a demo do violão errava 2 em 25 vezes (Em antes do C no 1º tempo, Am atrasado um tempo). **Ou seja: com áudio real, C/Em no 1º tempo e trocas atrasadas em um tempo podem acontecer. É para isso que existe a correção manual.**
+- Contagem (Node): demo com `st.grid={bpm:96}` correta no violão e no pad. Com 1 tempo de silêncio no começo, sai "— C | C Am | …", ou seja, respeita o tempo 1 da contagem.
+- Correção (Node): com transposição +2, corrigir, trocar e apagar acordes refletem certo no "Copiar cifra" e continuam certos ao voltar a transposição pra 0.
+- **Contagem ainda não testada com microfone real.** A latência do microfone pode deslocar uns 20–50 ms, coberto pelo `PRE`.
 - Violão: o tio já testou e gostou. **Teclado ainda não testado com gravação real.**
 
 ## Limitações conhecidas
@@ -106,7 +112,7 @@ Testado em Node com stubs de DOM:
 1. Testar com gravações reais e ajustar limiares (silêncio 6%, penalidade Viterbi 0,12, onset 1,6×).
 2. Diagramas dos acordes (posição dos dedos) e tablatura.
 3. Exportar MusicXML/PDF para abrir no MuseScore.
-4. Edição manual: tocar num acorde para corrigir.
+4. ~~Edição manual~~ (feito 25/11/2026). Próximo: corrigir também notas da melodia.
 5. Mais tipos de acorde (sus, dim, 9, baixo invertido) com detecção do baixo pela faixa grave.
 6. Salvar músicas (acervo do tio: letra + cifra).
 7. Versão multi-instrumento: separar com Demucs e transcrever com Basic Pitch / YourMT3 num servidor Python. A ordem "separar → transcrever" acumula erro, por isso os modelos conjuntos são melhores.

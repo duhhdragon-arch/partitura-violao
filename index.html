@@ -82,8 +82,34 @@ button:focus-visible,.file:focus-within{outline:3px solid var(--acc);outline-off
 footer{color:var(--mute);font-size:14px;padding-top:0}
 footer .wrap{border-top:1px solid var(--line);padding-top:16px;display:flex;flex-wrap:wrap;gap:6px 20px;justify-content:space-between}
 footer a{color:inherit}
+/* contagem */
+.cnt{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cnt .seg{align-items:center}
+.cnt input{width:3.4ch;border:0;background:transparent;color:var(--ink);font:800 19px Archivo,sans-serif;text-align:center;-moz-appearance:textfield;appearance:textfield}
+.cnt input::-webkit-inner-spin-button,.cnt input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.cnt input:focus-visible{outline:2px solid var(--acc);border-radius:6px}
+.cnt .u{font-size:12px;color:var(--mute);margin-right:4px}
+.tog[aria-pressed=true]{background:var(--acc);color:var(--accon);border-color:var(--acc)}
+.tog[aria-pressed=false]{color:var(--mute);text-decoration:line-through}
+/* correção de acorde */
+.hit{fill:transparent;cursor:pointer;transition:fill .12s}
+.hit:hover{fill:var(--accbg)}
+.hit:focus{outline:none}.hit:focus-visible{stroke:var(--acc);stroke-width:2}
+#score text{pointer-events:none}
+.hint{color:var(--mute);font-size:14px;margin:2px 0 0}
+dialog{border:1px solid var(--line);border-radius:20px;background:var(--paper);color:var(--ink);padding:20px 22px;width:min(440px,94vw);box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
+dialog::backdrop{background:rgba(10,10,14,.5);backdrop-filter:blur(2px)}
+dialog h3{font:800 22px Archivo,sans-serif;margin:0 0 14px}
+dialog form{display:grid;gap:8px}
+.roots{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:6px}
+.roots button{padding:0;min-width:0;font:800 16px Archivo,sans-serif}
+.roots button[aria-pressed=true]{background:var(--acc);color:var(--accon);border-color:var(--acc)}
+#pkQ{justify-self:start;margin-bottom:6px}
+.pkN{display:flex;align-items:center;gap:14px;background:var(--soft);border-radius:14px;padding:10px 14px}
+.pkN b{font:800 40px/1 Archivo,sans-serif;color:var(--acc);min-width:2.5em}
+.acts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.push{margin-left:0}}
-@media(max-width:520px){#rec{flex:1 1 100%}#upl,#play{flex:1 1 0;padding:0 12px}}
+@media(max-width:520px){#rec,.cntg{flex:1 1 100%}#upl,#play{flex:1 1 0;padding:0 12px}.lg{display:none}.acts button{flex:1 1 0;padding:0 8px}}
 @media(prefers-reduced-motion:reduce){.dot{animation:none}.hl,button,.sheet,h1 em{transition:none}}
 </style></head><body>
 <section class="band hero"><div class="wrap">
@@ -97,8 +123,13 @@ footer a{color:inherit}
  </div>
  <div class="row cap">
   <button class="pri big" id="rec"><span class="rd"></span><span id="recL">Gravar</span></button>
-  <label class="file big" id="upl">↑ Enviar gravação<input type="file" id="f" accept="audio/*,video/*"></label>
+  <label class="file big" id="upl">↑ Enviar<span class="lg">&nbsp;gravação</span><input type="file" id="f" accept="audio/*,video/*"></label>
   <button class="big" id="play" disabled>▶ Ouvir</button>
+  <div class="g cntg"><span class="lbl">Contagem antes de gravar</span><div class="cnt">
+   <button id="cOn" class="tog" aria-pressed="true" title="Contar 1-2-3-4 antes de gravar">1·2·3·4</button>
+   <div class="seg"><button id="cDn" aria-label="Mais lento">−</button><input id="cBpm" type="number" inputmode="numeric" min="40" max="200" value="80" aria-label="Andamento da contagem em bpm"><span class="u">bpm</span><button id="cUp" aria-label="Mais rápido">+</button></div>
+   <button id="cTap" title="Bata no ritmo da música algumas vezes">Bater ritmo</button>
+  </div></div>
  </div>
  <div class="row">
   <div class="g"><span class="lbl">Escrita</span><div class="seg" role="group" aria-label="Modo"><button id="mC" aria-pressed="true">Cifra</button><button id="mM" aria-pressed="false">Melodia</button></div></div>
@@ -112,7 +143,15 @@ footer a{color:inherit}
 <div class="live" id="live" hidden><span class="dot"></span><span id="lvT">0:00</span><b id="lvC">…</b><span id="lvH"></span></div>
 <div class="sheet"><h3 id="ttl">Exemplo: C – Am – F – G</h3><div class="sub" id="sub">gravação de demonstração gerada aqui mesmo · violão soa uma oitava abaixo do escrito</div><div id="score"></div></div>
 <div id="msg" role="status"></div>
+<p class="hint">Dica: toque num acorde da folha (ou num tempo vazio) para corrigir.</p>
 </div></section>
+<dialog id="pk" aria-labelledby="pkT"><form method="dialog">
+ <h3 id="pkT">Corrigir acorde</h3>
+ <span class="lbl">Nota</span><div class="roots" id="pkR"></div>
+ <span class="lbl">Tipo</span><div class="seg" id="pkQ"><button type="button" data-q="0">Maior</button><button type="button" data-q="1">Menor</button><button type="button" data-q="2">7</button><button type="button" data-q="3">m7</button></div>
+ <div class="pkN"><b id="pkN">C</b><button type="button" id="pkHear">▶ Ouvir</button></div>
+ <div class="acts"><button value="del">Sem acorde</button><button value="cancel" class="push">Cancelar</button><button value="ok" class="pri">Aplicar</button></div>
+</form></dialog>
 <section class="band" style="padding-top:0"><div class="wrap cols">
 <div><h2>O que funciona bem</h2><p><span class="ok">Acordes e cifra.</span> O som é decomposto nas 12 notas da escala e comparado com moldes de acordes maiores, menores e com sétima, batida por batida.</p><p><span class="ok">Andamento e tom.</span> Os ataques das batidas marcam o pulso; o conjunto das notas indica o tom.</p><p><span class="ok">Teclado.</span> Piano, órgão, strings e pad. No modo Melodia o teclado usa pauta dupla: clave de sol para a mão direita, clave de fá para a esquerda.</p></div>
 <div><h2>Onde ainda erra</h2><p>Acordes com nona, suspensos ou com baixo trocado (C/E) saem simplificados. A melodia só funciona com uma nota por vez, sem acompanhamento. Se o andamento sair o dobro ou a metade, use ½× ou 2×.</p><p>Pad e strings entram devagar, sem ataque marcado: o andamento é deduzido pelas trocas de acorde. Confira ouvindo e corrija com ½× ou 2× se precisar.</p></div>
@@ -122,6 +161,7 @@ footer a{color:inherit}
 <script>
 {
 const SR=22050,N=4096,HOP=512,FPS=SR/HOP;
+const PRE=.12; // segundos de áudio mantidos antes do fim da contagem (quem entra um pouco adiantado não perde o ataque)
 const $=id=>document.getElementById(id);
 const SH=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FL=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
 const Q=[{s:'',iv:[0,4,7],b:0},{s:'m',iv:[0,3,7],b:0},{s:'7',iv:[0,4,7,10],b:-.04},{s:'m7',iv:[0,3,7,10],b:-.04}];
@@ -174,6 +214,8 @@ function beatsOf(F){
  for(let l=lo;l<r.length;l++){let s=0;for(let i=0;i+l<n;i++)s+=e[i]*e[i+l];r[l]=s/Math.max(1,n-l)}
  // Pente: com wC>0 também conta a periodicidade em 2 batidas e em 1 compasso (trocas de acorde por compasso)
  let L=0,best=-1;for(let l=lo;l<=hi;l++){let s=r[l]+(P.wC>0?.5*r[2*l]+.5*r[st.bpb*l]:0);const bpm=60*FPS/l;s*=Math.exp(-.5*(Math.log2(bpm/105)/.9)**2);if(s>best){best=s;L=l}}
+ // Gravou com contagem: o andamento é conhecido, não precisa adivinhar (o rastreador ainda acompanha pequenas variações)
+ if(st.grid)L=FPS*60/st.grid.bpm;
  L*=st.lagMul;L=Math.max(6,Math.min(L,FPS*2.4));
  const cs=new Float32Array(n),bp=new Int32Array(n).fill(-1);
  for(let t=0;t<n;t++){let bv=-1e9,bi=-1;for(let p=Math.max(0,t-Math.round(2*L));p<=t-Math.round(L/2);p++){const v=cs[p]-400*Math.log((t-p)/L)**2;if(v>bv){bv=v;bi=p}}
@@ -202,6 +244,8 @@ function analyse(){
   const mj=dia+.6*ci(r,false)+.2*ci(r+7,false),mn=dia+.6*ci(r+9,true)+ci(r+4,false);
   if(mj>kb){kb=mj;key={r,mi:false}}if(mn>kb){kb=mn;key={r:(r+9)%12,mi:true}}}
  let b0=path.findIndex(s=>s<TPL.length);if(b0<0)b0=0;
+ // Com contagem, o tempo 1 é a batida mais perto do fim da contagem (o áudio começa PRE s antes dela), mesmo que ele espere para entrar
+ if(st.grid){const f0=Math.round(PRE*FPS);b0=0;for(let i=1;i<beats.length&&i<st.bpb;i++)if(Math.abs(beats[i]-f0)<Math.abs(beats[b0]-f0))b0=i}
  let last=path.length-1;while(last>b0&&path[last]==TPL.length)last--;
  // Cauda: um compasso final com até meia barra só repetindo o acorde anterior é o som morrendo, não um compasso novo
  const rem=(last-b0+1)%st.bpb;if(rem>0&&rem<=st.bpb/2&&last-rem>=b0&&path.slice(last-rem+1,last+1).every(s=>s==path[last-rem]))last-=rem;
@@ -213,7 +257,7 @@ function analyse(){
   if(v<3)continue;let m=-1,bc=0;for(const q in h)if(h[q]>bc){bc=h[q];m=+q}if(bc<v*.4)continue;
   const s=Math.round(beatPos(a)*2)/2-b0,d=Math.max(.5,Math.round((beatPos(e)-beatPos(a))*2)/2),bi=Math.floor(s/st.bpb);
   if(bars[bi]){const pos=s-bi*st.bpb,nt=bars[bi].notes;if(!nt.length||nt[nt.length-1].pos!=pos)nt.push({pos,dur:Math.min(d,st.bpb-pos),m})}}
- st.A={bars,bpm,key};render()}
+ st.A={bars,bpm,key};st.edits=0;render()}
 
 const flatKey=k=>{const r=(k.r+st.tr+120)%12;return k.mi?[2,7,0,5,10,3].includes(r):[5,10,3,8,1,6].includes(r)};
 const nm=(r,fl)=>(fl?FL:SH)[(r+st.tr+120)%12];
@@ -238,13 +282,15 @@ function render(){
    if(si==0)g+=`<text x="40" y="${s.y+2*G-2}" font-family="Archivo" font-weight="800" font-size="19">${st.bpb}</text><text x="40" y="${bot-2}" font-family="Archivo" font-weight="800" font-size="19">4</text>`});
   if(grand)g+=`<line x1="0" x2="0" y1="${top}" y2="${last}" stroke="currentColor" stroke-width="2"/>`;
   g+=`<text x="${lm}" y="${top-34}" font-size="11" fill="var(--mute)">${si*per+1}</text>`;
-  bs.forEach((b,k)=>{const x0=lm+k*bw,pad=16,step=(bw-pad*1.5)/st.bpb,X=pos=>x0+pad+pos*step;
+  bs.forEach((b,k)=>{const bi=si*per+k,x0=lm+k*bw,pad=16,step=(bw-pad*1.5)/st.bpb,X=pos=>x0+pad+pos*step;
    g+=`<line x1="${x0+bw}" x2="${x0+bw}" y1="${top}" y2="${last}" stroke="currentColor" stroke-width="${si==sys.length-1&&k==bs.length-1?3:1.2}"/>`;
-   b.ch.forEach(c=>{g+=`<text x="${X(c.pos)-4}" y="${top-14}" font-family="Archivo" font-weight="800" font-size="17">${chName(c.t,fl)}</text>`});
+   // Áreas de toque, uma por tempo, para corrigir o acorde (desenhadas antes do texto; o texto não recebe clique)
+   for(let p=0;p<st.bpb;p++){const c=b.ch.find(c=>c.pos==p);g+=`<rect class="hit" data-b="${bi}" data-p="${p}" x="${X(p)-9}" y="${top-34}" width="${step}" height="28" rx="7" tabindex="0" role="button" aria-label="Compasso ${bi+1}, tempo ${p+1}${c?': '+chName(c.t,fl):''}. Corrigir acorde"/>`}
+   b.ch.forEach(c=>{g+=`<text x="${X(c.pos)-4}" y="${top-14}" font-family="Archivo" font-weight="800" font-size="17"${c.ed?' style="fill:var(--acc)"':''}>${chName(c.t,fl)}</text>`});
    if(st.mode=='cifra'){for(let p=0;p<st.bpb;p++){const x=X(p)+2;g+=`<line x1="${x-5}" y1="${midY+6}" x2="${x+5}" y2="${midY-6}" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>`}}
    else b.notes.forEach(nt=>{const s=grand&&nt.m+st.tr+I.tr<60?SV[1]:SV[0];g+=note(X(nt.pos)+4,nt,fl,s.y,G,s.b,I.tr)})});
   out+=g+'</g>'});
- box.innerHTML=`<svg viewBox="0 0 ${W} ${sys.length*H+10}" height="${sys.length*H+10}" style="color:var(--ink)" role="img" aria-label="Partitura com ${A.bars.length} compassos">${out||'<text x="0" y="40">Nada reconhecido.</text>'}</svg>`;
+ box.innerHTML=`<svg viewBox="0 0 ${W} ${sys.length*H+10}" height="${sys.length*H+10}" style="color:var(--ink)" role="group" aria-label="Partitura com ${A.bars.length} compassos">${out||'<text x="0" y="40">Nada reconhecido.</text>'}</svg>`;
  if(st.mode=='melodia'&&!A.bars.some(b=>b.notes.length))$('msg').textContent='Nenhuma nota isolada encontrada. O modo Melodia é para notas tocadas uma de cada vez.'}
 
 // base = passo diatônico da linha de baixo da pauta (sol: E4 = 30; fá: G2 = 18); tr = semitons para escrever
@@ -270,14 +316,22 @@ async function recStart(){
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('msg').textContent='Este navegador não deixa usar o microfone. Abra pelo site (https) no Chrome ou Safari.';return}
  let ms;try{ms=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})}catch(e){$('msg').textContent='Microfone bloqueado. Libere o acesso nas permissões do navegador (dentro do Claude ele não funciona: use o site).';return}
  stop();const ctx=new AudioContext();await ctx.resume();const src=ctx.createMediaStreamSource(ms),sp=ctx.createScriptProcessor(4096,1,1),mute=ctx.createGain();mute.gain.value=0;
- R={on:true,ctx,ms,sp,src,chunks:[],len:0,rate:ctx.sampleRate,hist:[],last:'',t0:performance.now()};
- sp.onaudioprocess=e=>{if(!R.on)return;const d=new Float32Array(e.inputBuffer.getChannelData(0));R.chunks.push(d);R.len+=d.length;if(R.len>R.rate*240)recStop()};
+ // Contagem: agenda os cliques no relógio do áudio (preciso) e só guarda o som a partir de PRE s antes do fim da contagem
+ const bpm=st.cnt.on?st.cnt.bpm:0,spb=bpm?60/bpm:0,t1=ctx.currentTime+.2,cEnd=bpm?t1+st.bpb*spb:0;
+ if(bpm)for(let i=0;i<st.bpb;i++){clickAt(ctx,t1+i*spb,i==0);setTimeout(()=>{if(R.on&&R.cut)$('lvC').textContent=i+1},Math.max(0,(t1+i*spb-ctx.currentTime)*1000))}
+ R={on:true,ctx,ms,sp,src,chunks:[],len:0,rate:ctx.sampleRate,hist:[],last:'',t0:performance.now()+Math.max(0,cEnd-ctx.currentTime)*1000,cut:bpm?cEnd-PRE:0,grid:bpm};
+ sp.onaudioprocess=e=>{if(!R.on)return;let d=new Float32Array(e.inputBuffer.getChannelData(0));
+  if(R.cut){const tE=ctx.currentTime,tS=tE-d.length/R.rate;if(tE<=R.cut)return;if(tS<R.cut)d=d.slice(Math.floor((R.cut-tS)*R.rate));R.cut=0;$('lvH').textContent='';$('lvC').textContent='…'}
+  R.chunks.push(d);R.len+=d.length;if(R.len>R.rate*240)recStop()};
  src.connect(sp);sp.connect(mute);mute.connect(ctx.destination);
- $('recL').textContent='Parar';$('rec').classList.add('on');$('live').hidden=false;$('lvC').textContent='…';$('lvH').textContent='';$('msg').textContent='Ouvindo. Toque a música e aperte Parar no fim.';
+ $('recL').textContent='Parar';$('rec').classList.add('on');$('live').hidden=false;$('lvC').textContent=bpm?'':'…';$('lvH').textContent=bpm?'contagem: comece a tocar no próximo 1':'';
+ $('msg').textContent=bpm?`Contando ${st.bpb} tempos a ${bpm} bpm. Comece a tocar logo depois.`:'Ouvindo. Toque a música e aperte Parar no fim.';
  R.iv=setInterval(liveTick,350)}
+function clickAt(ctx,t,acc){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=acc?1760:1175;o.type='triangle';
+ g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(acc?.6:.4,t+.002);g.gain.exponentialRampToValueAtTime(.001,t+.06);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.08)}
 function tail(sec){const need=Math.round(sec*R.rate),out=new Float32Array(Math.min(need,R.len));let k=out.length;for(let i=R.chunks.length-1;i>=0&&k>0;i--){const c=R.chunks[i],n=Math.min(k,c.length);out.set(c.subarray(c.length-n),k-n);k-=n}return out}
 function rs(x,from){if(from==SR)return x;const r=from/SR,n=Math.floor(x.length/r),y=new Float32Array(n);for(let i=0;i<n;i++){const p=i*r,a=Math.floor(p),f=p-a;y[i]=(x[a]||0)*(1-f)+(x[a+1]||0)*f}return y}
-function liveTick(){const s=Math.floor((performance.now()-R.t0)/1000);$('lvT').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+function liveTick(){if(R.cut)return;const s=Math.max(0,Math.floor((performance.now()-R.t0)/1000));$('lvT').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
  const x=rs(tail(.6),R.rate);if(x.length<N+HOP)return;let e=0;for(const v of x)e+=v*v;if(Math.sqrt(e/x.length)<.004){$('lvC').textContent='…';return}
  const F=frames(x),c=new Float32Array(12);F.chroma.forEach(q=>{for(let k=0;k<12;k++)c[k]+=q[k]});const m=Math.max(...c)||1,cn=c.map(v=>v/m),nn=Math.hypot(...cn)||1;
  let bi=0,bv=-9;TPL.forEach((t,i)=>{let s2=0;for(let k=0;k<12;k++)s2+=t.v[k]*cn[k];s2=s2/nn+t.b;if(s2>bv){bv=s2;bi=i}});
@@ -287,14 +341,14 @@ async function recStop(){if(!R.on)return;R.on=false;clearInterval(R.iv);R.ms.get
  $('recL').textContent='Gravar';$('rec').classList.remove('on');$('live').hidden=true;
  if(R.len<R.rate*2){$('msg').textContent='Gravação curta demais. Toque pelo menos alguns compassos.';return}
  const all=new Float32Array(R.len);let o=0;for(const c of R.chunks){all.set(c,o);o+=c.length}
- $('ttl').textContent='Gravação de '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});st.demo=false;setSub('gravado pelo microfone · ');
+ $('ttl').textContent='Gravação de '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});st.demo=false;st.grid=R.grid?{bpm:R.grid}:null;setSub(R.grid?`gravado com contagem a ${R.grid} bpm · `:'gravado pelo microfone · ');
  try{const b=new AudioBuffer({length:all.length,sampleRate:R.rate,numberOfChannels:1});b.copyToChannel(all,0);const oc=new OfflineAudioContext(1,Math.ceil(b.duration*SR),SR),s=oc.createBufferSource();s.buffer=b;s.connect(oc.destination);s.start();run((await oc.startRendering()).getChannelData(0))}catch(e){run(rs(all,R.rate))}
  R.ctx.close()}
 async function load(file){
  stop();$('msg').textContent='Lendo o áudio…';
  try{const ab=await file.arrayBuffer();const dec=await new OfflineAudioContext(1,1,SR).decodeAudioData(ab);
   const dur=Math.min(dec.duration,240);const oc=new OfflineAudioContext(1,Math.ceil(dur*SR),SR);const s=oc.createBufferSource();s.buffer=dec;s.connect(oc.destination);s.start();const r=await oc.startRendering();
-  $('ttl').textContent=file.name.replace(/\.[^.]+$/,'');st.demo=false;setSub(dec.duration>240?'primeiros 4 minutos · ':'');
+  $('ttl').textContent=file.name.replace(/\.[^.]+$/,'');st.demo=false;st.grid=null;setSub(dec.duration>240?'primeiros 4 minutos · ':'');
   run(r.getChannelData(0))}catch(e){$('msg').textContent='Não consegui ler esse arquivo. Tente MP3, M4A, WAV ou um vídeo MP4.'}}
 
 function run(x){st.buf=x;st.tr=0;st.lagMul=1;$('msg').textContent='Analisando…';$('play').disabled=false;
@@ -304,8 +358,10 @@ function run(x){st.buf=x;st.tr=0;st.lagMul=1;$('msg').textContent='Analisando…
 const subNote=()=>prof().clef=='g8'?'violão soa uma oitava abaixo do escrito':prof().n.toLowerCase()+' · teclado soa como está escrito';
 function setSub(pre){st.pre=pre;$('sub').textContent=pre+subNote()}
 
+// Aleatório com semente fixa: a demo sai sempre igual (e já conferida), em vez de variar a cada abertura
+let seed=1;const rnd=()=>(seed=(seed*1664525+1013904223)>>>0)/4294967296;
 // Demo: C – Am – F – G, 96 bpm, no timbre escolhido
-function demo(){const I=st.ins,bpm=96,b=60/bpm,bars=8;
+function demo(){seed=20261125;const I=st.ins,bpm=96,b=60/bpm,bars=8;
  const x=new Float32Array(Math.ceil((bars*4*b+1.5)*SR)),st0=Math.round(.15*SR);
  if(I=='violao'){const prog=[[48,52,55,60,64],[45,52,57,60,64],[41,48,53,57,60,65],[43,47,50,55,59,67]];
   for(let i=0;i<bars;i++){const v=prog[i%4];for(let k=0;k<4;k++){const t0=st0+Math.round((i*4+k)*b*SR),dn=k%2==0,ns=dn?v:[...v].reverse().slice(0,4);ns.forEach((m,j)=>pluck(x,t0+j*Math.round(.012*SR),m,Math.round(b*SR*1.05),dn?.25:.14))}}}
@@ -326,13 +382,13 @@ const TB={piano:{H:[1,.5,.3,.2,.12,.08,.05,.03],a:.004,r:.08,dec:1,v:[0]},
 function kb(x,t0,m,dur,amp,tim){const T=TB[tim],f=440*2**((m-69)/12),Z=2048,A=T.a*SR,Rl=T.r*SR,end=Math.min(x.length,t0+dur+Rl);
  const mk=(h0,h1)=>{const w=new Float32Array(Z);for(let h=h0;h<=Math.min(h1,T.H.length);h++){if(!T.H[h-1]||f*h>9000)continue;for(let i=0;i<Z;i++)w[i]+=T.H[h-1]*Math.sin(2*Math.PI*h*i/Z)}return w};
  const wa=mk(1,T.dec?2:99),wb=T.dec?mk(3,99):null,da=T.dec?Math.exp(-1.55/SR):1,db=Math.exp(-2.8/SR);let ga=1,gb=1;
- const ph=T.v.map(()=>Math.random()),inc=T.v.map(d=>f*(1+d)/SR),nv=T.v.length;
+ const ph=T.v.map(()=>rnd()),inc=T.v.map(d=>f*(1+d)/SR),nv=T.v.length;
  for(let i=0;t0+i<end;i++){let env=Math.min(1,i/A);if(i>dur)env*=Math.max(0,1-(i-dur)/Rl);
   const vb=T.vib?1+T.vib*Math.sin(2*Math.PI*5.5*i/SR)*Math.min(1,i/(.4*SR)):1;let s=0;
   for(let vi=0;vi<nv;vi++){let p=ph[vi]+inc[vi]*vb;p-=Math.floor(p);ph[vi]=p;const k=(p*Z)|0;s+=wa[k]*ga+(wb?wb[k]*gb:0)}
   ga*=da;gb*=db;x[t0+i]+=amp*env*s/nv}}
-function showDemo(){$('ttl').textContent='Exemplo: C – Am – F – G'+(st.ins=='violao'?'':' · '+prof().n);st.demo=true;setSub('gravação de demonstração gerada aqui mesmo · ');run(demo())}
-function pluck(x,t0,m,dur,amp){const L=Math.round(SR/(440*2**((m-69)/12))),d=new Float32Array(L);for(let i=0;i<L;i++)d[i]=Math.random()*2-1;let p=0;for(let i=0;i<dur&&t0+i<x.length;i++){const q=(p+1)%L,v=d[p];d[p]=.4985*(d[p]+d[q]);x[t0+i]+=v*amp*(i>dur-220?(dur-i)/220:1);p=q}}
+function showDemo(){$('ttl').textContent='Exemplo: C – Am – F – G'+(st.ins=='violao'?'':' · '+prof().n);st.demo=true;st.grid=null;setSub('gravação de demonstração gerada aqui mesmo · ');run(demo())}
+function pluck(x,t0,m,dur,amp){const L=Math.round(SR/(440*2**((m-69)/12))),d=new Float32Array(L);for(let i=0;i<L;i++)d[i]=rnd()*2-1;let p=0;for(let i=0;i<dur&&t0+i<x.length;i++){const q=(p+1)%L,v=d[p];d[p]=.4985*(d[p]+d[q]);x[t0+i]+=v*amp*(i>dur-220?(dur-i)/220:1);p=q}}
 
 function stop(){if(st.src){try{st.src.stop()}catch(e){}st.src=null}cancelAnimationFrame(st.raf);$('play').textContent='▶ Ouvir';document.querySelectorAll('.hl.on').forEach(r=>r.classList.remove('on'))}
 function play(){if(st.src){stop();return}try{st.ctx=st.ctx||new AudioContext();st.ctx.resume();const b=st.ctx.createBuffer(1,st.buf.length,SR);b.copyToChannel(st.buf,0);const s=st.ctx.createBufferSource();s.buffer=b;s.connect(st.ctx.destination);s.start();st.src=s;st.t0=st.ctx.currentTime;s.onended=()=>{if(st.src===s)stop()};$('play').textContent='❚❚ Parar';tick()}catch(e){$('msg').textContent='O navegador não deixou tocar o áudio aqui.'}}
@@ -344,15 +400,17 @@ $('play').addEventListener('click',play);
 const setMode=m=>{st.mode=m;$('mC').setAttribute('aria-pressed',m=='cifra');$('mM').setAttribute('aria-pressed',m=='melodia');$('msg').textContent='';render()};
 $('mC').addEventListener('click',()=>setMode('cifra'));$('mM').addEventListener('click',()=>setMode('melodia'));
 $('tD').addEventListener('click',()=>{st.tr--;render()});$('tU').addEventListener('click',()=>{st.tr++;render()});
-const re=()=>{if(st.F){stop();analyse()}};
-$('bH').addEventListener('click',()=>{st.lagMul*=2;re()});$('bD').addEventListener('click',()=>{st.lagMul/=2;re()});
-const setM=n=>{st.bpb=n;$('m4').setAttribute('aria-pressed',n==4);$('m3').setAttribute('aria-pressed',n==3);re()};
+// Refazer a análise apaga as correções manuais: pergunta antes
+const keepEdits=()=>!st.edits||confirm('Refazer a análise apaga os acordes que você corrigiu. Continuar?');
+const re=f=>{if(!st.F||!keepEdits())return;f();stop();analyse()};
+$('bH').addEventListener('click',()=>re(()=>{st.lagMul*=2}));$('bD').addEventListener('click',()=>re(()=>{st.lagMul/=2}));
+const setM=n=>{if(st.bpb==n)return;const ap=()=>{st.bpb=n;$('m4').setAttribute('aria-pressed',n==4);$('m3').setAttribute('aria-pressed',n==3)};if(!st.F)ap();else re(ap)};
 $('m4').addEventListener('click',()=>setM(4));$('m3').addEventListener('click',()=>setM(3));
 $('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(cifraTxt());$('msg').textContent='Cifra copiada.'}catch(e){$('msg').textContent=cifraTxt()}});
 const ro=new ResizeObserver(()=>render());ro.observe($('score'));
 document.fonts&&document.fonts.ready.then(render);
 // Troca de instrumento: refaz a demo, ou reanalisa a gravação atual com o novo perfil. A escolha fica salva no aparelho.
-function setIns(k){if(!okIns(k))return;st.ins=k;if(k!='violao')st.lastKb=k;try{localStorage.setItem('partitura.ins',k)}catch(e){}
+function setIns(k){if(!okIns(k)||(st.buf&&!st.demo&&k!=st.ins&&!keepEdits()))return;st.ins=k;if(k!='violao')st.lastKb=k;try{localStorage.setItem('partitura.ins',k)}catch(e){}
  const kbd=k!='violao';document.documentElement.dataset.ins=kbd?'kbd':'vio';$('iV').setAttribute('aria-pressed',!kbd);$('iT').setAttribute('aria-pressed',kbd);$('tim').hidden=!kbd;
  document.querySelectorAll('#tim button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t==k));
  if(!st.buf)return;if(st.demo){showDemo();return}
@@ -360,6 +418,46 @@ function setIns(k){if(!okIns(k))return;st.ins=k;if(k!='violao')st.lastKb=k;try{l
 $('iV').addEventListener('click',()=>setIns('violao'));$('iT').addEventListener('click',()=>setIns(st.lastKb));
 document.querySelectorAll('#tim button').forEach(b=>b.addEventListener('click',()=>setIns(b.dataset.t)));
 if(st.ins!='violao')st.lastKb=st.ins;
+
+// ---- Contagem: liga/desliga, bpm (40–200) e "bater ritmo". Fica salva no aparelho; o valor salvo é validado antes de usar.
+const clampB=v=>{v=Math.round(+v);return Number.isFinite(v)?Math.min(200,Math.max(40,v)):80};
+st.cnt={on:true,bpm:80};try{const o=JSON.parse(localStorage.getItem('partitura.cnt')||'null');if(o&&typeof o=='object')st.cnt={on:o.on!==false,bpm:clampB(o.bpm)}}catch(e){}
+function cntSync(){$('cOn').setAttribute('aria-pressed',st.cnt.on);$('cBpm').value=st.cnt.bpm;try{localStorage.setItem('partitura.cnt',JSON.stringify(st.cnt))}catch(e){}}
+$('cOn').addEventListener('click',()=>{st.cnt.on=!st.cnt.on;cntSync()});
+$('cDn').addEventListener('click',()=>{st.cnt.bpm=clampB(st.cnt.bpm-1);cntSync()});$('cUp').addEventListener('click',()=>{st.cnt.bpm=clampB(st.cnt.bpm+1);cntSync()});
+$('cBpm').addEventListener('change',e=>{st.cnt.bpm=clampB(e.target.value);cntSync()});
+let taps=[];$('cTap').addEventListener('click',()=>{const t=performance.now();if(taps.length&&t-taps[taps.length-1]>2000)taps=[];taps.push(t);taps=taps.slice(-6);
+ if(taps.length>1){const d=(taps[taps.length-1]-taps[0])/(taps.length-1);st.cnt.bpm=clampB(60000/d);st.cnt.on=true;cntSync();$('msg').textContent=`Andamento da contagem: ${st.cnt.bpm} bpm (${taps.length} toques).`}
+ else $('msg').textContent='Continue batendo no ritmo…'});
+cntSync();
+
+// ---- Correção de acorde: toque num tempo da folha, escolha nota e tipo, ouça e aplique.
+// PK.r é a nota como aparece na tela (já transposta); ao salvar, desconta a transposição.
+let PK={b:0,p:0,r:0,q:0,src:null};
+function openPick(b,p){const A=st.A;if(!A||!A.bars[b])return;const fl=flatKey(A.key);
+ let cur=null;for(let i=b;i>=0&&!cur;i--){const cs=A.bars[i].ch.filter(c=>i<b||c.pos<=p);if(cs.length)cur=cs[cs.length-1]}
+ const t=cur&&cur.t;PK.b=b;PK.p=p;PK.r=t?(t.r+st.tr+120)%12:0;PK.q=t?t.qi:0;
+ $('pkT').textContent=`Compasso ${b+1} · tempo ${p+1}`;
+ $('pkR').innerHTML=(fl?FL:SH).map((n,i)=>`<button type="button" data-r="${i}">${n}</button>`).join(''); // só nomes fixos da lista, nada vindo do usuário
+ pkSync();$('pk').returnValue='';$('pk').showModal()}
+function pkSync(){const fl=flatKey(st.A.key);document.querySelectorAll('#pkR button').forEach(x=>x.setAttribute('aria-pressed',+x.dataset.r==PK.r));
+ document.querySelectorAll('#pkQ button').forEach(x=>x.setAttribute('aria-pressed',+x.dataset.q==PK.q));$('pkN').textContent=(fl?FL:SH)[PK.r]+Q[PK.q].s}
+function hearChord(){try{st.ctx=st.ctx||new AudioContext();st.ctx.resume();if(PK.src)try{PK.src.stop()}catch(e){}
+ const root=48+PK.r,ns=[root-12,...Q[PK.q].iv.map(i=>root+12+i)],x=new Float32Array(Math.round(1.3*SR));ns.forEach(m=>kb(x,0,m,Math.round(.9*SR),.2,'piano'));
+ let mx=0;for(const v of x)mx=Math.max(mx,Math.abs(v));if(mx>0)for(let i=0;i<x.length;i++)x[i]*=.45/mx;
+ const b=st.ctx.createBuffer(1,x.length,SR);b.copyToChannel(x,0);const s=st.ctx.createBufferSource();s.buffer=b;s.connect(st.ctx.destination);s.start();PK.src=s}catch(e){}}
+function applyPick(v){const bar=st.A.bars[PK.b];if(!bar)return;const i=bar.ch.findIndex(c=>c.pos==PK.p);
+ if(v=='ok'){const c={pos:PK.p,t:{r:((PK.r-st.tr)%12+12)%12,qi:PK.q},ed:true};if(i>=0)bar.ch[i]=c;else{bar.ch.push(c);bar.ch.sort((a,b)=>a.pos-b.pos)}}
+ else{if(i>=0)bar.ch.splice(i,1);if(PK.p==0)bar.ch.unshift({pos:0,t:null,ed:true})}
+ st.edits++;render();$('msg').textContent='Acorde corrigido. Os corrigidos ficam coloridos; "Copiar cifra" já leva a correção.'}
+$('pkR').addEventListener('click',e=>{const x=e.target.closest('button[data-r]');if(x){PK.r=+x.dataset.r;pkSync();hearChord()}});
+$('pkQ').addEventListener('click',e=>{const x=e.target.closest('button[data-q]');if(x){PK.q=+x.dataset.q;pkSync();hearChord()}});
+$('pkHear').addEventListener('click',hearChord);
+$('pk').addEventListener('close',()=>{const v=$('pk').returnValue;if(v=='ok'||v=='del')applyPick(v)});
+const hitOf=e=>e.target.closest&&e.target.closest('.hit');
+$('score').addEventListener('click',e=>{const h=hitOf(e);if(h)openPick(+h.dataset.b,+h.dataset.p)});
+$('score').addEventListener('keydown',e=>{const h=hitOf(e);if(h&&(e.key=='Enter'||e.key==' ')){e.preventDefault();openPick(+h.dataset.b,+h.dataset.p)}});
+
 setIns(st.ins);showDemo();
 }
 </script></body></html>
