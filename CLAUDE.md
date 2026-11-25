@@ -37,6 +37,8 @@ Abrir `http://localhost:8000`. No celular, testar pelo site do GitHub Pages (htt
 - **Copiar cifra**: texto no formato `| C | Am | F | G |` com tom, bpm e compasso.
 - Ao abrir, carrega uma **demo sintetizada** (C – Am – F – G, 96 bpm) no timbre escolhido: violão por Karplus-Strong; teclado por síntese aditiva com wavetable (`TB`/`kb()`): piano com decaimento, órgão sustentado em drawbars, strings com 2 vozes + vibrato, pad com ataque lento de 0,6 s.
 - Tema claro/escuro automático (`light-dark()`), layout responsivo (2 compassos por linha abaixo de 560px).
+- Visual (25/11/2026): marca "Partitura" com ícone, linhas de pauta discretas no fundo do topo, painel de controles em 3 linhas (instrumento/timbre · captar · escrita/transpor/andamento/compasso), botões segmentados tipo "pílula", 4 cartões de números e folha com faixa colorida. **A cor de destaque segue o instrumento**: âmbar no violão, cobalto no teclado (`:root[data-ins=kbd]`, definido em `setIns`). O botão Gravar tem `.rd` (bolinha) + `#recL` (texto): o JS troca só o `#recL`. Rodapé diz que o áudio não sai do aparelho.
+- Conferir visual: Chrome headless com `--screenshot`. Para largura de celular, usar um iframe de 375px, porque o `--window-size` do headless tem largura mínima e engana.
 
 ## Perfis de instrumento (`INS`, lido por `prof()`)
 | Perfil | Pauta | `tr` (escrita) | Pitch MIDI | `wC` | `pen` (Viterbi) |

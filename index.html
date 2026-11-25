@@ -5,72 +5,111 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800&family=Inter:wght@400;600&family=Noto+Music&display=swap" rel="stylesheet">
 <style>
-/* VOICE: oficina de músico — direto, prático, como um caderno de cifras bem feito
-   IDEA: uma folha de partitura (lead sheet) que se escreve sozinha enquanto o violão toca
-   PICTURE: a própria folha: pauta com clave, barras, cifras acima e marcação de ritmo
-   COLOUR and TYPE: papel branco, tinta preta, um azul cobalto de caneta para o compasso atual; Archivo + Inter, clave em Noto Music
-   LAYOUT: título curto, folha grande logo abaixo, controles numa faixa entre os dois, explicação curta no fim */
-:root{color-scheme:light dark;--bg:light-dark(#f4f3ef,#121417);--paper:light-dark(#fff,#1b1e23);--ink:light-dark(#151515,#ece9e2);--mute:light-dark(#5d5b57,#a4a29c);--line:light-dark(#d8d6d0,#353a42);--acc:light-dark(#2346d6,#8aa4ff);--accbg:light-dark(#e6ebff,#22305f)}
+/* VOICE: oficina de músico: direto, prático, como um caderno de cifras bem feito
+   IDEA: uma folha de partitura que se escreve sozinha enquanto o instrumento toca
+   COLOUR: papel e tinta; destaque muda com o instrumento: âmbar (madeira do violão) ou cobalto (teclado)
+   TYPE: Archivo (títulos, números) + Inter (texto); clave em Noto Music
+   LAYOUT: marca e título, painel de controles agrupado, números da música, folha grande, notas no fim */
+:root{color-scheme:light dark;
+ --bg:light-dark(#f3f1ea,#0f1115);--paper:light-dark(#fffdf8,#191c22);--soft:light-dark(#e9e6dc,#232730);
+ --ink:light-dark(#17161a,#ecebe6);--mute:light-dark(#615e57,#a3a29d);--line:light-dark(#dcd8cc,#30343d);
+ --acc:light-dark(#a8480b,#f2a65e);--accbg:light-dark(#fbe7d3,#3a2a1b);--accon:light-dark(#fff,#1a1208)}
+:root[data-ins=kbd]{--acc:light-dark(#2346d6,#8aa4ff);--accbg:light-dark(#e3e9ff,#1f2c58);--accon:light-dark(#fff,#0c1430)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 [hidden]{display:none!important}
-.ins{margin:20px 0 0}
-.ins .lbl{font:600 14px Inter,sans-serif;color:var(--mute)}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
-.band{padding:clamp(20px,3.5vw,48px) max(5vw,16px)}
-.wrap{max-width:1240px;margin:0 auto}
-h1{font:800 clamp(30px,4.6vw,48px)/1.05 Archivo,sans-serif;margin:0 0 6px;text-wrap:balance}
-h2{font:800 24px/1.15 Archivo,sans-serif;margin:0 0 10px}
-.lede{color:var(--mute);margin:0;max-width:62ch}
-.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0 14px}
-button,.file{font:600 15px Inter,sans-serif;min-height:44px;padding:0 16px;border-radius:10px;border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.band{padding:clamp(18px,3vw,40px) max(5vw,16px)}
+.wrap{max-width:1180px;margin:0 auto}
+/* topo com linhas de pauta ao fundo */
+.hero{position:relative;padding-bottom:8px}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+ background:repeating-linear-gradient(to bottom,transparent 0 21px,var(--line) 21px 22px) 0 34px/100% 110px no-repeat;
+ mask:linear-gradient(to right,transparent,#000 30%,#000 70%,transparent);opacity:.4}
+.brand{display:flex;align-items:center;gap:10px;font:800 17px Archivo,sans-serif;letter-spacing:.01em}
+.brand img{width:34px;height:34px;border-radius:9px}
+.brand small{font:600 12px Inter,sans-serif;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:2px 10px;background:var(--paper)}
+h1{font:800 clamp(32px,5.2vw,58px)/1.02 Archivo,sans-serif;margin:22px 0 10px;text-wrap:balance;letter-spacing:-.015em}
+h1 em{font-style:normal;color:var(--acc);transition:color .3s}
+h2{font:800 22px/1.15 Archivo,sans-serif;margin:0 0 10px}
+.lede{color:var(--mute);margin:0;max-width:60ch;font-size:17px}
+/* painel de controles */
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:16px clamp(14px,2vw,22px);margin-top:26px;box-shadow:0 20px 40px -32px rgba(0,0,0,.45);display:grid;gap:14px}
+.row{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end}
+.row+.row{border-top:1px dashed var(--line);padding-top:14px}
+.g{display:grid;gap:5px}
+.lbl{font:700 11px Inter,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--mute)}
+.push{margin-left:auto}
+button,.file{font:600 15px Inter,sans-serif;min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:border-color .15s,background .15s,transform .1s}
+button:hover:not(:disabled),.file:hover{border-color:var(--ink)}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:default}
 button:focus-visible,.file:focus-within{outline:3px solid var(--acc);outline-offset:2px}
-.pri{background:var(--ink);color:var(--paper)}
-.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden}
-.seg button{border:0;border-radius:0;min-width:44px}
-.seg button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.big{min-height:52px;padding:0 22px;font-size:16px;border-radius:14px}
+.pri{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.pri .rd{width:11px;height:11px;border-radius:50%;background:#ff5146;box-shadow:0 0 0 3px rgba(255,81,70,.25)}
+#rec.on{background:#d92b1e;border-color:#d92b1e;color:#fff}
+#rec.on .rd{background:#fff;border-radius:2px;box-shadow:none}
+.seg{display:inline-flex;gap:3px;background:var(--soft);border-radius:13px;padding:3px}
+.seg button{border:0;background:transparent;min-height:40px;border-radius:10px;min-width:46px;padding:0 14px;color:var(--mute)}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--paper);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.seg.acc button[aria-pressed=true]{background:var(--acc);color:var(--accon)}
 .file input{position:absolute;opacity:0;width:1px;height:1px}
-.chips{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:15px;color:var(--mute)}
-.chips b{color:var(--ink);font:800 18px Archivo,sans-serif;margin-left:4px}
-.sheet{background:var(--paper);border-radius:14px;box-shadow:0 1px 0 var(--line),0 18px 40px -24px rgba(0,0,0,.35);padding:22px clamp(10px,2.5vw,32px) 28px;margin-top:14px}
-.sheet h3{font:800 clamp(20px,2.6vw,28px)/1.1 Archivo,sans-serif;text-align:center;margin:4px 0 2px}
-.sheet .sub{text-align:center;color:var(--mute);font-size:14px;margin-bottom:10px}
-#score svg{display:block;width:100%;overflow:visible}
-#msg{min-height:24px;font-size:15px;color:var(--mute);margin-top:10px}
-.hl{fill:var(--accbg);opacity:0;transition:opacity .15s}.hl.on{opacity:1}
-.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:24px 40px}
-.cols p{margin:0 0 8px}
-.ok{color:var(--acc);font-weight:600}
-pre{background:var(--paper);border-radius:10px;padding:14px;font-size:14px;overflow-x:auto;border:1px solid var(--line)}
-.live{display:flex;align-items:center;gap:14px 18px;flex-wrap:wrap;background:var(--ink);color:var(--paper);border-radius:14px;padding:14px 20px;margin-top:14px}
-.live b{font:800 clamp(40px,8vw,64px)/1 Archivo,sans-serif;min-width:2.2em}
-.live #lvH{font:600 16px Archivo,sans-serif;opacity:.7;overflow:hidden;white-space:nowrap;flex:1 1 200px}
+/* números da música */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.stat span{display:block;font:700 11px Inter,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--mute)}
+.stat b{font:800 clamp(20px,2.4vw,26px)/1.2 Archivo,sans-serif}
+/* ao vivo */
+.live{display:flex;align-items:center;gap:14px 20px;flex-wrap:wrap;background:#121318;color:#f3f1ea;border-radius:18px;padding:16px 22px;margin-top:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 0 0 4px var(--accbg)}
+.live b{font:800 clamp(44px,8vw,72px)/1 Archivo,sans-serif;min-width:2.2em;color:var(--acc)}
+.live #lvT{font:600 15px Inter,sans-serif;font-variant-numeric:tabular-nums;opacity:.8}
+.live #lvH{font:600 16px Archivo,sans-serif;opacity:.6;overflow:hidden;white-space:nowrap;flex:1 1 200px;mask:linear-gradient(to right,transparent,#000 25%)}
 .dot{width:14px;height:14px;border-radius:50%;background:#ff4b3e;animation:pu 1s infinite}
 @keyframes pu{50%{opacity:.3}}
-#rec.on{background:#d92b1e;border-color:#d92b1e;color:#fff}
-@media(prefers-reduced-motion:reduce){.dot{animation:none}}
-@media(prefers-reduced-motion:reduce){.hl{transition:none}}
-@media(max-width:600px){.chips b{font-size:16px}}
+/* folha */
+.sheet{background:var(--paper);border-radius:18px;border-top:6px solid var(--acc);box-shadow:0 1px 0 var(--line),0 28px 50px -30px rgba(0,0,0,.45);padding:26px clamp(10px,2.5vw,34px) 30px;margin-top:14px;transition:border-color .3s}
+.sheet h3{font:800 clamp(22px,2.8vw,30px)/1.1 Archivo,sans-serif;text-align:center;margin:4px 0 4px;letter-spacing:-.01em}
+.sheet .sub{text-align:center;color:var(--mute);font-size:14px;margin-bottom:12px}
+#score svg{display:block;width:100%;overflow:visible}
+#msg{min-height:24px;font-size:15px;color:var(--mute);margin-top:12px}
+.hl{fill:var(--accbg);opacity:0;transition:opacity .15s}.hl.on{opacity:1}
+/* notas no fim */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.cols>div{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.cols p{margin:0 0 8px;color:var(--mute)}
+.ok{color:var(--acc);font-weight:600}
+footer{color:var(--mute);font-size:14px;padding-top:0}
+footer .wrap{border-top:1px solid var(--line);padding-top:16px;display:flex;flex-wrap:wrap;gap:6px 20px;justify-content:space-between}
+footer a{color:inherit}
+@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.push{margin-left:0}}
+@media(max-width:520px){#rec{flex:1 1 100%}#upl,#play{flex:1 1 0;padding:0 12px}}
+@media(prefers-reduced-motion:reduce){.dot{animation:none}.hl,button,.sheet,h1 em{transition:none}}
 </style></head><body>
-<section class="band"><div class="wrap">
-<h1>Do violão e do teclado para a partitura</h1>
-<p class="lede">Escolha o instrumento, toque perto do microfone ou envie uma gravação (do celular serve, até em vídeo). A página descobre o andamento, o tom e os acordes, e escreve a cifra numa pauta. No modo Melodia, notas tocadas uma de cada vez viram notas na pauta.</p>
-<div class="bar ins">
- <span class="lbl">Instrumento</span>
- <div class="seg" role="group" aria-label="Instrumento"><button id="iV" aria-pressed="true">Violão</button><button id="iT" aria-pressed="false">Teclado</button></div>
- <div class="seg" role="group" aria-label="Timbre do teclado" id="tim" hidden><button data-t="piano" aria-pressed="false">Piano</button><button data-t="orgao" aria-pressed="false">Órgão</button><button data-t="strings" aria-pressed="false">Strings</button><button data-t="pad" aria-pressed="false">Pad</button></div>
+<section class="band hero"><div class="wrap">
+<div class="brand"><img src="icon.svg" alt="">Partitura <small>violão · teclado</small></div>
+<h1>Do <em>violão</em> e do <em>teclado</em> para a partitura</h1>
+<p class="lede">Escolha o instrumento, toque perto do microfone ou envie uma gravação (do celular serve, até em vídeo). A página descobre o andamento, o tom e os acordes, e escreve a cifra numa pauta.</p>
+<div class="panel">
+ <div class="row">
+  <div class="g"><span class="lbl">Instrumento</span><div class="seg acc" role="group" aria-label="Instrumento"><button id="iV" aria-pressed="true">Violão</button><button id="iT" aria-pressed="false">Teclado</button></div></div>
+  <div class="g" id="tim" hidden><span class="lbl">Timbre</span><div class="seg" role="group" aria-label="Timbre do teclado"><button data-t="piano" aria-pressed="false">Piano</button><button data-t="orgao" aria-pressed="false">Órgão</button><button data-t="strings" aria-pressed="false">Strings</button><button data-t="pad" aria-pressed="false">Pad</button></div></div>
+ </div>
+ <div class="row cap">
+  <button class="pri big" id="rec"><span class="rd"></span><span id="recL">Gravar</span></button>
+  <label class="file big" id="upl">↑ Enviar gravação<input type="file" id="f" accept="audio/*,video/*"></label>
+  <button class="big" id="play" disabled>▶ Ouvir</button>
+ </div>
+ <div class="row">
+  <div class="g"><span class="lbl">Escrita</span><div class="seg" role="group" aria-label="Modo"><button id="mC" aria-pressed="true">Cifra</button><button id="mM" aria-pressed="false">Melodia</button></div></div>
+  <div class="g"><span class="lbl">Transpor</span><div class="seg" role="group" aria-label="Transpor"><button id="tD" aria-label="Baixar meio tom">−½</button><button id="tU" aria-label="Subir meio tom">+½</button></div></div>
+  <div class="g"><span class="lbl">Andamento</span><div class="seg" role="group" aria-label="Andamento"><button id="bH" title="Metade do andamento">½×</button><button id="bD" title="Dobro do andamento">2×</button></div></div>
+  <div class="g"><span class="lbl">Compasso</span><div class="seg" role="group" aria-label="Compasso"><button id="m4" aria-pressed="true">4/4</button><button id="m3" aria-pressed="false">3/4</button></div></div>
+  <button id="copy" class="push">⧉ Copiar cifra</button>
+ </div>
 </div>
-<div class="bar">
- <button class="pri" id="rec">● Gravar</button>
- <label class="file" id="upl">Enviar gravação<input type="file" id="f" accept="audio/*,video/*"></label>
- <button id="play" disabled>▶ Ouvir</button>
- <div class="seg" role="group" aria-label="Modo"><button id="mC" aria-pressed="true">Cifra</button><button id="mM" aria-pressed="false">Melodia</button></div>
- <div class="seg" role="group" aria-label="Transpor"><button id="tD" aria-label="Baixar meio tom">−½</button><button id="tU" aria-label="Subir meio tom">+½</button></div>
- <div class="seg" role="group" aria-label="Andamento"><button id="bH" title="Metade do andamento">½×</button><button id="bD" title="Dobro do andamento">2×</button></div>
- <div class="seg" role="group" aria-label="Compasso"><button id="m4" aria-pressed="true">4/4</button><button id="m3" aria-pressed="false">3/4</button></div>
- <button id="copy">Copiar cifra</button>
-</div>
-<div class="chips"><span>Tom<b id="kKey">–</b></span><span>Andamento<b id="kBpm">–</b></span><span>Compassos<b id="kBars">–</b></span><span>Transposição<b id="kTr">0</b></span></div>
+<div class="stats"><div class="stat"><span>Tom</span><b id="kKey">–</b></div><div class="stat"><span>Andamento</span><b id="kBpm">–</b></div><div class="stat"><span>Compassos</span><b id="kBars">–</b></div><div class="stat"><span>Transposição</span><b id="kTr">0</b></div></div>
 <div class="live" id="live" hidden><span class="dot"></span><span id="lvT">0:00</span><b id="lvC">…</b><span id="lvH"></span></div>
 <div class="sheet"><h3 id="ttl">Exemplo: C – Am – F – G</h3><div class="sub" id="sub">gravação de demonstração gerada aqui mesmo · violão soa uma oitava abaixo do escrito</div><div id="score"></div></div>
 <div id="msg" role="status"></div>
@@ -78,8 +117,9 @@ pre{background:var(--paper);border-radius:10px;padding:14px;font-size:14px;overf
 <section class="band" style="padding-top:0"><div class="wrap cols">
 <div><h2>O que funciona bem</h2><p><span class="ok">Acordes e cifra.</span> O som é decomposto nas 12 notas da escala e comparado com moldes de acordes maiores, menores e com sétima, batida por batida.</p><p><span class="ok">Andamento e tom.</span> Os ataques das batidas marcam o pulso; o conjunto das notas indica o tom.</p><p><span class="ok">Teclado.</span> Piano, órgão, strings e pad. No modo Melodia o teclado usa pauta dupla: clave de sol para a mão direita, clave de fá para a esquerda.</p></div>
 <div><h2>Onde ainda erra</h2><p>Acordes com nona, suspensos ou com baixo trocado (C/E) saem simplificados. A melodia só funciona com uma nota por vez, sem acompanhamento. Se o andamento sair o dobro ou a metade, use ½× ou 2×.</p><p>Pad e strings entram devagar, sem ataque marcado: o andamento é deduzido pelas trocas de acorde. Confira ouvindo e corrija com ½× ou 2× se precisar.</p></div>
-<div><h2>Dica de gravação</h2><p>Grave perto do violão, num lugar quieto. Celular tocando outro celular funciona, mas alto-falante pequeno perde o grave: uma caixinha de som ajuda. Toque em Gravar, e comece tocando: silêncio longo no começo atrapalha achar o primeiro compasso. Arquivos de até 4 minutos.</p></div>
+<div><h2>Dica de gravação</h2><p>Grave perto do instrumento, num lugar quieto. Celular tocando outro celular funciona, mas alto-falante pequeno perde o grave: uma caixinha de som ajuda. Toque em Gravar e comece tocando: silêncio longo no começo atrapalha achar o primeiro compasso. Arquivos de até 4 minutos.</p></div>
 </div></section>
+<footer class="band"><div class="wrap"><span>Tudo roda no seu navegador: o áudio não sai do aparelho.</span><a href="https://github.com/duhhdragon-arch/partitura-violao">código no GitHub</a></div></footer>
 <script>
 {
 const SR=22050,N=4096,HOP=512,FPS=SR/HOP;
@@ -234,7 +274,7 @@ async function recStart(){
  R={on:true,ctx,ms,sp,src,chunks:[],len:0,rate:ctx.sampleRate,hist:[],last:'',t0:performance.now()};
  sp.onaudioprocess=e=>{if(!R.on)return;const d=new Float32Array(e.inputBuffer.getChannelData(0));R.chunks.push(d);R.len+=d.length;if(R.len>R.rate*240)recStop()};
  src.connect(sp);sp.connect(mute);mute.connect(ctx.destination);
- $('rec').textContent='■ Parar';$('rec').classList.add('on');$('live').hidden=false;$('lvC').textContent='…';$('lvH').textContent='';$('msg').textContent='Ouvindo. Toque a música e aperte Parar no fim.';
+ $('recL').textContent='Parar';$('rec').classList.add('on');$('live').hidden=false;$('lvC').textContent='…';$('lvH').textContent='';$('msg').textContent='Ouvindo. Toque a música e aperte Parar no fim.';
  R.iv=setInterval(liveTick,350)}
 function tail(sec){const need=Math.round(sec*R.rate),out=new Float32Array(Math.min(need,R.len));let k=out.length;for(let i=R.chunks.length-1;i>=0&&k>0;i--){const c=R.chunks[i],n=Math.min(k,c.length);out.set(c.subarray(c.length-n),k-n);k-=n}return out}
 function rs(x,from){if(from==SR)return x;const r=from/SR,n=Math.floor(x.length/r),y=new Float32Array(n);for(let i=0;i<n;i++){const p=i*r,a=Math.floor(p),f=p-a;y[i]=(x[a]||0)*(1-f)+(x[a+1]||0)*f}return y}
@@ -245,7 +285,7 @@ function liveTick(){const s=Math.floor((performance.now()-R.t0)/1000);$('lvT').t
  const t=TPL[bi],name=SH[t.r]+Q[t.qi].s;if(name===R.cand)R.cnt++;else{R.cand=name;R.cnt=1}
  if(R.cnt>=2&&name!==R.last){R.last=name;R.hist.push(name);$('lvC').textContent=name;$('lvH').textContent=R.hist.slice(-12).join('  ')}}
 async function recStop(){if(!R.on)return;R.on=false;clearInterval(R.iv);R.ms.getTracks().forEach(t=>t.stop());try{R.sp.disconnect();R.src.disconnect()}catch(e){}
- $('rec').textContent='● Gravar';$('rec').classList.remove('on');$('live').hidden=true;
+ $('recL').textContent='Gravar';$('rec').classList.remove('on');$('live').hidden=true;
  if(R.len<R.rate*2){$('msg').textContent='Gravação curta demais. Toque pelo menos alguns compassos.';return}
  const all=new Float32Array(R.len);let o=0;for(const c of R.chunks){all.set(c,o);o+=c.length}
  $('ttl').textContent='Gravação de '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});st.demo=false;setSub('gravado pelo microfone · ');
@@ -314,7 +354,7 @@ const ro=new ResizeObserver(()=>render());ro.observe($('score'));
 document.fonts&&document.fonts.ready.then(render);
 // Troca de instrumento: refaz a demo, ou reanalisa a gravação atual com o novo perfil. A escolha fica salva no aparelho.
 function setIns(k){if(!okIns(k))return;st.ins=k;if(k!='violao')st.lastKb=k;try{localStorage.setItem('partitura.ins',k)}catch(e){}
- const kbd=k!='violao';$('iV').setAttribute('aria-pressed',!kbd);$('iT').setAttribute('aria-pressed',kbd);$('tim').hidden=!kbd;
+ const kbd=k!='violao';document.documentElement.dataset.ins=kbd?'kbd':'vio';$('iV').setAttribute('aria-pressed',!kbd);$('iT').setAttribute('aria-pressed',kbd);$('tim').hidden=!kbd;
  document.querySelectorAll('#tim button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t==k));
  if(!st.buf)return;if(st.demo){showDemo();return}
  stop();setSub(st.pre);$('msg').textContent='Analisando…';setTimeout(()=>{st.F=frames(st.buf);analyse();$('msg').textContent='Pronto. Reanalisado como '+prof().n+'.'},30)}
