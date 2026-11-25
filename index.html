@@ -108,8 +108,28 @@ dialog form{display:grid;gap:8px}
 .pkN{display:flex;align-items:center;gap:14px;background:var(--soft);border-radius:14px;padding:10px 14px}
 .pkN b{font:800 40px/1 Archivo,sans-serif;color:var(--acc);min-width:2.5em}
 .acts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.tog2{border-color:var(--acc);color:var(--acc)}
+.fld{display:grid;gap:5px}
+.fld input{font:600 17px Inter,sans-serif;min-height:46px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.fld input:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
+.svI{color:var(--mute);font-size:14px;margin:4px 0 0}
+.pinfo,.pfoot{display:none}
+/* impressão / PDF: só a folha, em papel branco, um sistema nunca é cortado no meio */
+@media print{
+ @page{size:A4;margin:14mm 12mm}
+ :root{color-scheme:light}
+ body{background:#fff}
+ body>*:not(.hero),.hero .wrap>*:not(.sheet),.hero::before{display:none!important}
+ .band{padding:0}
+ .sheet{box-shadow:none;border:0;border-radius:0;padding:0;margin:0;background:#fff}
+ .sheet h3{font-size:24px}
+ .pinfo{display:block;text-align:center;font:600 13px Inter,sans-serif;color:#333;margin:0 0 6px}
+ .pfoot{display:block;text-align:center;font-size:10px;color:#888;margin-top:10px}
+ #score svg{break-inside:avoid;page-break-inside:avoid}
+ .hl,.hit{display:none}
+}
 @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.push{margin-left:0}}
-@media(max-width:520px){#rec,.cntg{flex:1 1 100%}#upl,#play{flex:1 1 0;padding:0 12px}.lg{display:none}.acts button{flex:1 1 0;padding:0 8px}}
+@media(max-width:520px){#rec,.cntg{flex:1 1 100%}#upl,#play{flex:1 1 0;padding:0 12px}.lg{display:none}.acts button{flex:1 1 0;padding:0 8px}.cnt>button{flex:1 1 auto}}
 @media(prefers-reduced-motion:reduce){.dot{animation:none}.hl,button,.sheet,h1 em{transition:none}}
 </style></head><body>
 <section class="band hero"><div class="wrap">
@@ -123,7 +143,7 @@ dialog form{display:grid;gap:8px}
  </div>
  <div class="row cap">
   <button class="pri big" id="rec"><span class="rd"></span><span id="recL">Gravar</span></button>
-  <label class="file big" id="upl">↑ Enviar<span class="lg">&nbsp;gravação</span><input type="file" id="f" accept="audio/*,video/*"></label>
+  <label class="file big" id="upl">↑ Enviar<span class="lg">gravação</span><input type="file" id="f" accept="audio/*,video/*"></label>
   <button class="big" id="play" disabled>▶ Ouvir</button>
   <div class="g cntg"><span class="lbl">Contagem antes de gravar</span><div class="cnt">
    <button id="cOn" class="tog" aria-pressed="true" title="Contar 1-2-3-4 antes de gravar">1·2·3·4</button>
@@ -136,12 +156,18 @@ dialog form{display:grid;gap:8px}
   <div class="g"><span class="lbl">Transpor</span><div class="seg" role="group" aria-label="Transpor"><button id="tD" aria-label="Baixar meio tom">−½</button><button id="tU" aria-label="Subir meio tom">+½</button></div></div>
   <div class="g"><span class="lbl">Andamento</span><div class="seg" role="group" aria-label="Andamento"><button id="bH" title="Metade do andamento">½×</button><button id="bD" title="Dobro do andamento">2×</button></div></div>
   <div class="g"><span class="lbl">Compasso</span><div class="seg" role="group" aria-label="Compasso"><button id="m4" aria-pressed="true">4/4</button><button id="m3" aria-pressed="false">3/4</button></div></div>
-  <button id="copy" class="push">⧉ Copiar cifra</button>
+ </div>
+ <div class="row">
+  <div class="g"><span class="lbl">Levar a música</span><div class="cnt">
+   <button id="save" class="tog2">♫ Salvar no Repertório</button>
+   <button id="print">🖨 Imprimir / PDF</button>
+   <button id="copy">⧉ Copiar cifra</button>
+  </div></div>
  </div>
 </div>
 <div class="stats"><div class="stat"><span>Tom</span><b id="kKey">–</b></div><div class="stat"><span>Andamento</span><b id="kBpm">–</b></div><div class="stat"><span>Compassos</span><b id="kBars">–</b></div><div class="stat"><span>Transposição</span><b id="kTr">0</b></div></div>
 <div class="live" id="live" hidden><span class="dot"></span><span id="lvT">0:00</span><b id="lvC">…</b><span id="lvH"></span></div>
-<div class="sheet"><h3 id="ttl">Exemplo: C – Am – F – G</h3><div class="sub" id="sub">gravação de demonstração gerada aqui mesmo · violão soa uma oitava abaixo do escrito</div><div id="score"></div></div>
+<div class="sheet"><h3 id="ttl">Exemplo: C – Am – F – G</h3><div class="sub" id="sub">gravação de demonstração gerada aqui mesmo · violão soa uma oitava abaixo do escrito</div><div class="pinfo" id="pinfo"></div><div id="score"></div><div class="pfoot">Partitura · duhhdragon-arch.github.io/partitura-violao</div></div>
 <div id="msg" role="status"></div>
 <p class="hint">Dica: toque num acorde da folha (ou num tempo vazio) para corrigir.</p>
 </div></section>
@@ -151,6 +177,13 @@ dialog form{display:grid;gap:8px}
  <span class="lbl">Tipo</span><div class="seg" id="pkQ"><button type="button" data-q="0">Maior</button><button type="button" data-q="1">Menor</button><button type="button" data-q="2">7</button><button type="button" data-q="3">m7</button></div>
  <div class="pkN"><b id="pkN">C</b><button type="button" id="pkHear">▶ Ouvir</button></div>
  <div class="acts"><button value="del">Sem acorde</button><button value="cancel" class="push">Cancelar</button><button value="ok" class="pri">Aplicar</button></div>
+</form></dialog>
+<dialog id="sv" aria-labelledby="svT"><form method="dialog">
+ <h3 id="svT">Salvar no Repertório</h3>
+ <label class="fld"><span class="lbl">Nome da música</span><input id="svNome" maxlength="200" autocomplete="off" required></label>
+ <label class="fld"><span class="lbl">Artista (opcional)</span><input id="svArt" maxlength="200" autocomplete="off"></label>
+ <p class="svI" id="svI"></p>
+ <div class="acts"><button value="cancel" class="push" formnovalidate>Cancelar</button><button value="ok" class="pri">Abrir no Repertório</button></div>
 </form></dialog>
 <section class="band" style="padding-top:0"><div class="wrap cols">
 <div><h2>O que funciona bem</h2><p><span class="ok">Acordes e cifra.</span> O som é decomposto nas 12 notas da escala e comparado com moldes de acordes maiores, menores e com sétima, batida por batida.</p><p><span class="ok">Andamento e tom.</span> Os ataques das batidas marcam o pulso; o conjunto das notas indica o tom.</p><p><span class="ok">Teclado.</span> Piano, órgão, strings e pad. No modo Melodia o teclado usa pauta dupla: clave de sol para a mão direita, clave de fá para a esquerda.</p></div>
@@ -266,14 +299,15 @@ const chName=(t,fl)=>t?nm(t.r,fl)+Q[t.qi].s:'—';
 function render(){
  const A=st.A;if(!A)return;const fl=flatKey(A.key);
  $('kKey').textContent=nm(A.key.r,fl)+(A.key.mi?' menor':' maior');$('kBpm').textContent=A.bpm+' bpm';$('kBars').textContent=A.bars.length;$('kTr').textContent=(st.tr>0?'+':'')+st.tr;
- const I=prof(),box=$('score'),W=Math.max(300,box.clientWidth),per=W<560?2:4,G=8,top=64;
+ $('pinfo').textContent=`Tom ${nm(A.key.r,fl)}${A.key.mi?' menor':' maior'} · ${A.bpm} bpm · ${st.bpb}/4 · ${prof().n}${st.tr?` · transposto ${st.tr>0?'+':''}${st.tr}`:''}`;
+ const I=prof(),box=$('score'),W=st.printW||Math.max(300,box.clientWidth),per=W<560?2:4,G=8,top=64;
  // Pautas do sistema: violão = sol com 8; teclado = sol (cifra) ou sol + fá (melodia). b = passo diatônico da linha de baixo
  const grand=I.clef=='grand'&&st.mode=='melodia';
  const SV=grand?[{y:top,c:'g',b:30},{y:top+4*G+48,c:'f',b:18}]:[{y:top,c:I.clef=='g8'?'g8':'g',b:30}];
  const last=SV[SV.length-1].y+4*G,H=last+54;
  const sys=[];for(let i=0;i<A.bars.length;i+=per)sys.push(A.bars.slice(i,i+per));
- const midY=top+2*G;let out='';
- sys.forEach((bs,si)=>{const lm=si==0?70:44,bw=(W-lm)/per;let g=`<g transform="translate(0,${si*H})">`;
+ const midY=top+2*G,out=[];
+ sys.forEach((bs,si)=>{const lm=si==0?70:44,bw=(W-lm)/per;let g='<g>';
   bs.forEach((b,k)=>{const bi=si*per+k;g+=`<rect class="hl" data-b="${bi}" x="${lm+k*bw}" y="${top-46}" width="${bw}" height="${last-top+86}" rx="6"/>`});
   SV.forEach(s=>{const bot=s.y+4*G;
    for(let l=0;l<5;l++)g+=`<line x1="0" x2="${lm+bs.length*bw}" y1="${s.y+l*G}" y2="${s.y+l*G}" stroke="currentColor" stroke-width="1"/>`;
@@ -289,8 +323,8 @@ function render(){
    b.ch.forEach(c=>{g+=`<text x="${X(c.pos)-4}" y="${top-14}" font-family="Archivo" font-weight="800" font-size="17"${c.ed?' style="fill:var(--acc)"':''}>${chName(c.t,fl)}</text>`});
    if(st.mode=='cifra'){for(let p=0;p<st.bpb;p++){const x=X(p)+2;g+=`<line x1="${x-5}" y1="${midY+6}" x2="${x+5}" y2="${midY-6}" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>`}}
    else b.notes.forEach(nt=>{const s=grand&&nt.m+st.tr+I.tr<60?SV[1]:SV[0];g+=note(X(nt.pos)+4,nt,fl,s.y,G,s.b,I.tr)})});
-  out+=g+'</g>'});
- box.innerHTML=`<svg viewBox="0 0 ${W} ${sys.length*H+10}" height="${sys.length*H+10}" style="color:var(--ink)" role="group" aria-label="Partitura com ${A.bars.length} compassos">${out||'<text x="0" y="40">Nada reconhecido.</text>'}</svg>`;
+  out.push(`<svg viewBox="0 0 ${W} ${H}" height="${H}" style="color:var(--ink)" role="group" aria-label="Compassos ${si*per+1} a ${si*per+bs.length}">${g}</g></svg>`)});
+ box.innerHTML=out.length?out.join(''):'<p>Nada reconhecido.</p>';
  if(st.mode=='melodia'&&!A.bars.some(b=>b.notes.length))$('msg').textContent='Nenhuma nota isolada encontrada. O modo Melodia é para notas tocadas uma de cada vez.'}
 
 // base = passo diatônico da linha de baixo da pauta (sol: E4 = 30; fá: G2 = 18); tr = semitons para escrever
@@ -457,6 +491,34 @@ $('pk').addEventListener('close',()=>{const v=$('pk').returnValue;if(v=='ok'||v=
 const hitOf=e=>e.target.closest&&e.target.closest('.hit');
 $('score').addEventListener('click',e=>{const h=hitOf(e);if(h)openPick(+h.dataset.b,+h.dataset.p)});
 $('score').addEventListener('keydown',e=>{const h=hitOf(e);if(h&&(e.key=='Enter'||e.key==' ')){e.preventDefault();openPick(+h.dataset.b,+h.dataset.p)}});
+
+// ---- Imprimir / PDF: a folha é redesenhada na largura do papel A4 e volta ao normal depois
+$('print').addEventListener('click',()=>window.print());
+addEventListener('beforeprint',()=>{st.printW=700;render()});addEventListener('afterprint',()=>{st.printW=0;render()});
+
+// ---- Salvar no Repertório Palco: a música vai no próprio link (#importar=...), em base64url.
+// O fragmento (#) não é enviado a servidor nenhum. O Repertório valida tudo e pergunta antes de salvar.
+const REP=location.pathname.includes('/partitura-violao/')?new URL('../repertorio-palco/',location.href).href:'https://duhhdragon-arch.github.io/repertorio-palco/';
+const b64u=s=>{const by=new TextEncoder().encode(s);let bin='';for(let i=0;i<by.length;i+=8192)bin+=String.fromCharCode.apply(null,by.subarray(i,i+8192));return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+// Cifra no formato do Repertório: 4 compassos por linha, marca de tempo [m:ss] a cada 8; "%" = repete o compasso anterior
+function cifraRep(){const A=st.A,fl=flatKey(A.key),L=[],mmss=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
+ for(let i=0;i<A.bars.length;i+=4){if(i%8==0){if(i)L.push('');L.push(`[${mmss(Math.max(0,A.bars[i].t0))}]`)}
+  L.push('| '+A.bars.slice(i,i+4).map(b=>b.ch.length?(b.ch.filter(c=>c.t).map(c=>chName(c.t,fl)).join(' ')||' '):'%').join(' | ')+' |')}
+ return L.join('\n')}
+function pacote(titulo,artista){const A=st.A,fl=flatKey(A.key),d=new Date().toLocaleDateString('pt-BR'),I=prof();
+ return{v:1,app:'partitura',titulo,artista,tom:nm(A.key.r,fl)+(A.key.mi?'m':''),bpm:String(A.bpm),cifra:cifraRep(),
+  notas:`Cifra tirada no Partitura (${I.clef=='g8'?'violão':'teclado, '+I.n.toLowerCase()}) em ${d}. Compasso ${st.bpb}/4.${st.edits?' Com acordes corrigidos à mão.':''} Conferir de ouvido.`}}
+$('save').addEventListener('click',()=>{if(!st.A)return;const t=$('ttl').textContent;
+ $('svNome').value=/^(Exemplo|Gravação de)/.test(t)?'':t.slice(0,200);$('svArt').value='';
+ const A=st.A,fl=flatKey(A.key);$('svI').textContent=`Tom ${nm(A.key.r,fl)}${A.key.mi?'m':''} · ${A.bpm} bpm · ${A.bars.length} compassos. O Repertório abre numa aba nova e pergunta antes de salvar.`;
+ $('sv').returnValue='';$('sv').showModal();$('svNome').focus()});
+$('sv').addEventListener('close',()=>{if($('sv').returnValue!='ok')return;const nome=$('svNome').value.trim();if(!nome)return;
+ const url=REP+'#importar='+b64u(JSON.stringify(pacote(nome,$('svArt').value.trim())));
+ if(url.length>60000){$('msg').textContent='Música longa demais para mandar pelo link. Use "Copiar cifra" e cole no Repertório.';return}
+ window.open(url,'_blank','noopener');$('msg').textContent='Abri o Repertório numa aba nova. Confirme lá para salvar.'});
+
+// ---- Modo offline: o service worker guarda o app no aparelho (só funciona em HTTPS ou localhost)
+if('serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 setIns(st.ins);showDemo();
 }

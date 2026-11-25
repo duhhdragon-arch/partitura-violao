@@ -16,6 +16,7 @@ App web que escuta **violão ou teclado** (microfone ao vivo ou arquivo de áudi
 | `README.md` | Descrição curta do repositório |
 | `.nojekyll` | Faz o GitHub Pages servir os arquivos como estão |
 
+| `sw.js` | Modo offline (service worker). Ver "Offline" abaixo |
 | `fonts.css` + `fonts/` | Fontes hospedadas no próprio site (woff2 + licenças OFL) |
 
 **Nenhuma requisição externa** (desde 25/11/2026). As fontes (Archivo e Inter, variáveis; Noto Music para as claves 𝄞 𝄢) foram baixadas do Google Fonts e ficam em `fonts/`. Só estão os subconjuntos latin e latin-ext; da Noto Music, só o subconjunto "music". Motivo: com o Google Fonts, cada visita mandava o IP do visitante ao Google. As licenças OFL (`fonts/OFL-*.txt`) precisam acompanhar as fontes. Para conferir: servir por http local e listar `performance.getEntriesByType("resource")` fora da origem (deve sair vazio).
@@ -31,6 +32,8 @@ Abrir `http://localhost:8000`. No celular, testar pelo site do GitHub Pages (htt
 - **Instrumento**: Violão | Teclado (timbres Piano, Órgão, Strings, Pad). A escolha fica em `localStorage` (`partitura.ins`), validada contra a lista `INS` antes de usar. Trocar de instrumento refaz a demo, ou reanalisa a gravação atual com o novo perfil.
 - **Contagem antes de gravar** (25/11/2026): liga/desliga (`1·2·3·4`), bpm 40–200 com −/+, campo numérico e "Bater ritmo" (tap tempo, média dos últimos 6 toques, zera após 2 s parado). Fica em `localStorage` (`partitura.cnt`, JSON validado com `clampB`). Ao gravar, os cliques são agendados no relógio do `AudioContext` (`clickAt`, mais preciso que `setTimeout`). O áudio só é guardado a partir de `PRE = 0,12 s` antes do fim da contagem (`R.cut`). Com isso `st.grid = {bpm}`: `beatsOf` usa esse andamento em vez da autocorrelação, e `analyse` põe o tempo 1 na batida mais próxima de `PRE`, mesmo se ele entrar atrasado (aparece "—"). Arquivo enviado e demo zeram `st.grid`.
 - **Corrigir acorde** (25/11/2026): cada tempo da folha tem um `<rect class="hit">` (clicável e focável por teclado, Enter/Espaço) que abre o `<dialog id="pk">`: 12 notas (♯ ou ♭ conforme o tom), tipo (maior, menor, 7, m7), prévia sonora com piano sintetizado e os botões "Sem acorde", Cancelar e Aplicar. `PK.r` é a nota como aparece na tela; ao salvar desconta `st.tr`. O acorde corrigido ganha `ed:true` e aparece na cor de destaque. `st.edits` conta as correções; ½×, 2×, 3/4 e troca de instrumento **perguntam antes** (`keepEdits`), porque reanalisar apaga as correções.
+- **Imprimir / PDF** (25/11/2026): `window.print()`. O CSS `@media print` mostra só a `.sheet` em papel branco, mais `.pinfo` (tom · bpm · compasso · instrumento · transposição) e `.pfoot`. `render()` gera **um `<svg>` por sistema** (linha), com `break-inside:avoid`, então a página nunca corta uma linha no meio. Em `beforeprint`, `st.printW = 700` (largura A4) e o render refaz; `afterprint` volta ao normal.
+- **Salvar no Repertório** (25/11/2026): abre o diálogo `#sv` (nome, artista) e depois uma aba nova em `../repertorio-palco/#importar=<base64url(JSON)>`. O JSON é `{v:1, app, titulo, artista, tom, bpm, cifra, notas}`. A cifra vem de `cifraRep()` no formato do Repertório: `| C G7 | Dm | F |   |`, 4 compassos por linha, `[m:ss]` a cada 8, `%` para compasso sem troca e vazio para silêncio (o "—" não é aceito pelo `isChordLine` do Repertório). O fragmento `#` não vai para o servidor. Limite de 60.000 caracteres. **O Repertório valida e pede confirmação** (ver o `app.js` dele, `importarDoLink`).
 - **● Gravar / ■ Parar**: microfone ao vivo. Enquanto grava, mostra o acorde atual grande e o histórico. Ao parar, analisa a gravação inteira e monta a partitura. Limite: 4 min.
 - **Enviar gravação**: aceita `audio/*` e `video/*` (MP3, M4A, WAV, MP4…). Analisa os primeiros 4 min.
 - **▶ Ouvir**: toca o áudio e destaca o compasso atual na pauta.
@@ -43,6 +46,13 @@ Abrir `http://localhost:8000`. No celular, testar pelo site do GitHub Pages (htt
 - Tema claro/escuro automático (`light-dark()`), layout responsivo (2 compassos por linha abaixo de 560px).
 - Visual (25/11/2026): marca "Partitura" com ícone, linhas de pauta discretas no fundo do topo, painel de controles em 3 linhas (instrumento/timbre · captar · escrita/transpor/andamento/compasso), botões segmentados tipo "pílula", 4 cartões de números e folha com faixa colorida. **A cor de destaque segue o instrumento**: âmbar no violão, cobalto no teclado (`:root[data-ins=kbd]`, definido em `setIns`). O botão Gravar tem `.rd` (bolinha) + `#recL` (texto): o JS troca só o `#recL`. Rodapé diz que o áudio não sai do aparelho.
 - Conferir visual: Chrome headless com `--screenshot`. Para largura de celular, usar um iframe de 375px, porque o `--window-size` do headless tem largura mínima e engana.
+
+## Offline (`sw.js`)
+- O registro só acontece em contexto seguro (HTTPS ou localhost).
+- Página: **rede primeiro**, com limite de 4 s e cópia em cache como reserva. Por isso não é preciso mudar `CACHE` a cada atualização do `index.html`.
+- Fontes, ícone e manifest: **cache primeiro**. Mudar `CACHE` (`partitura-vN`) só quando a lista `ARQUIVOS` mudar.
+- **Mesmo origin do Repertório Palco** (`duhhdragon-arch.github.io`): o CacheStorage é por origin, não por pasta. Cada app só apaga caches com o próprio prefixo (`partitura-` / `repertorio-`). Antes, o Repertório apagava tudo que não fosse dele; foi corrigido junto (v4). O mesmo vale para o `localStorage`: os dois apps enxergam as chaves um do outro, por isso as chaves têm prefixo (`partitura.*`, `repertorio_palco_*`).
+- Testado via Chrome DevTools Protocol (servidor Node desligado no meio do teste): o app abre offline, com a partitura e as fontes, e os caches dos dois apps convivem. O `--dump-dom` do headless **não** serve para testar service worker, porque o momento em que ele captura a página varia de uma execução para outra.
 
 ## Perfis de instrumento (`INS`, lido por `prof()`)
 | Perfil | Pauta | `tr` (escrita) | Pitch MIDI | `wC` | `pen` (Viterbi) |
@@ -111,10 +121,10 @@ Testado em Node com stubs de DOM:
 ## Próximos passos (ideias)
 1. Testar com gravações reais e ajustar limiares (silêncio 6%, penalidade Viterbi 0,12, onset 1,6×).
 2. Diagramas dos acordes (posição dos dedos) e tablatura.
-3. Exportar MusicXML/PDF para abrir no MuseScore.
+3. PDF feito (impressão, 25/11/2026). Falta MusicXML para abrir no MuseScore.
 4. ~~Edição manual~~ (feito 25/11/2026). Próximo: corrigir também notas da melodia.
 5. Mais tipos de acorde (sus, dim, 9, baixo invertido) com detecção do baixo pela faixa grave.
-6. Salvar músicas (acervo do tio: letra + cifra).
+6. Salvar músicas: feito via Repertório Palco (botão "Salvar no Repertório", 25/11/2026).
 7. Versão multi-instrumento: separar com Demucs e transcrever com Basic Pitch / YourMT3 num servidor Python. A ordem "separar → transcrever" acumula erro, por isso os modelos conjuntos são melhores.
 8. Foco em música brasileira (sertanejo, MPB, pagode, louvor) como diferencial.
 
