@@ -113,11 +113,29 @@ Testado em Node com stubs de DOM:
 - Contagem (Node): demo com `st.grid={bpm:96}` correta no violão e no pad. Com 1 tempo de silêncio no começo, sai "— C | C Am | …", ou seja, respeita o tempo 1 da contagem.
 - Correção (Node): com transposição +2, corrigir, trocar e apagar acordes refletem certo no "Copiar cifra" e continuam certos ao voltar a transposição pra 0.
 - **Contagem ainda não testada com microfone real.**
-- Andamento variável (Node, `teste4.js` no scratchpad): 5 timbres × 5 curvas (constante 96, acelera 84→104, desacelera 104→84, oscila ±7%, 90→100→88) × com/sem contagem, 12 compassos C–Am–F–G. Rastreador antigo: 436/600 compassos certos (com contagem e aceleração, 5/12, exatamente o problema do tio). Novo: 600/600.
-- Metrônomo vazando (Node, `teste5.js`): cliques até 1,5× o volume do violão, violão/piano/pad: 12/12, sem compasso fantasma no fim. Chrome com microfone falso: bolinhas pulsando, subtítulo "gravado com metrônomo", sem erros; conferido em 1000 px e 375 px.
+- Andamento variável (Node, `testes/teste4.js`): 5 timbres × 5 curvas (constante 96, acelera 84→104, desacelera 104→84, oscila ±7%, 90→100→88) × com/sem contagem, 12 compassos C–Am–F–G. Rastreador antigo: 436/600 compassos certos (com contagem e aceleração, 5/12, exatamente o problema do tio). Novo: 600/600.
+- Metrônomo vazando (Node, `testes/teste5.js`): cliques até 1,5× o volume do violão, violão/piano/pad: 12/12, sem compasso fantasma no fim. Chrome com microfone falso: bolinhas pulsando, subtítulo "gravado com metrônomo", sem erros; conferido em 1000 px e 375 px.
 - Afinador (Node): tons com harmônicos + ruído em 9 notas (de E1 41 Hz a A5) × 5 desafinações (−30 a +25 cents): pior erro de 0,21 cents. Silêncio e ruído não geram leitura. Corda Karplus-Strong: variação < 0,05 cent entre leituras; um único erro de oitava, na janela do ataque, que a mediana absorve. No Chrome com microfone falso, a cadeia mic → analyser → YIN funcionou (48 kHz, `running`), mas o bipe falso é picotado e foi descartado pela confiança, o que é o esperado. **Falta testar com instrumento de verdade.**
 - Formas de violão (Node): as 48 combinações (12 × 4) só tocam notas do acorde, têm tônica + terça (+ sétima) e o baixo é a tônica. A latência do microfone pode deslocar uns 20–50 ms, coberto pelo `PRE`.
 - Violão: o tio já testou e gostou. **Teclado ainda não testado com gravação real.**
+
+### Scripts de teste (`testes/`)
+Rodar da pasta do projeto. Todos carregam o `<script>` do `index.html` com `(0,eval)` e stubs mínimos de DOM.
+- `node testes/teste2.js index.html saida.txt`: regressão (demos dos 5 timbres, contagem, correção, pacote do Repertório).
+- `node testes/teste3.js index.html`: afinador YIN, 48 formas de violão, Karplus-Strong.
+- `node testes/teste4.js index.html [violao,piano,orgao,strings,pad]`: andamento variável (precisa dar 600/600).
+- `node testes/teste5.js index.html` e depois `node index.html.tmp.js index.html` (apagar o .tmp.js depois): metrônomo vazando no microfone.
+- `cdp.js` (offline/service worker), `cdp2.js` (quadro de acordes e afinador), `cdp3.js` (metrônomo): precisam de um Chrome headless com `--remote-debugging-port` e microfone falso (`--use-fake-ui-for-media-stream --use-fake-device-for-media-stream`). Uso: `node testes/cdp3.js <pasta que contém partitura-violao/> <pasta das capturas> <porta>`.
+
+## Histórico (feedback do tio e versões)
+Tudo em 25/11/2026.
+- v1 só violão (feita em outro chat). O tio testou e gostou.
+- Teclado (piano, órgão, strings, pad), visual novo, fontes no próprio site.
+- Correção de acorde com um toque e contagem 1-2-3-4.
+- Imprimir/PDF, offline e "Salvar no Repertório".
+- Afinador e quadro "Acordes desta música" (commit 6c657fb).
+- **Feedback do tio depois disso** (testado com violão): os acordes saem todos certos, mas escorregam de compasso quando quem toca acelera ou desacelera, porque o app fixava o andamento da contagem e parava de contar. Ele sugeriu detectar a velocidade de quem toca ou ter um metrônomo sempre ligado. **Fizemos os dois** (commit 021652c, publicado): rastreador de andamento variável e botão "♩ Metrônomo".
+- Próximo passo: o tio testar o metrônomo e o modo livre com gravação real e mandar retorno. Se algum compasso escorregar, pedir a gravação para ajustar `LAM`/`MU` em `beatsOf`.
 
 ## Limitações conhecidas
 - Acordes com 9ª, sus, dim, aum e baixo trocado (C/E) saem simplificados.
@@ -129,7 +147,7 @@ Testado em Node com stubs de DOM:
 - `ScriptProcessorNode` é obsoleto. Migrar para `AudioWorklet`.
 
 ## Próximos passos (ideias)
-1. Testar com gravações reais e ajustar limiares (silêncio 6%, penalidade Viterbi 0,12, onset 1,6×).
+1. Testar com gravações reais e ajustar limiares (silêncio 6% / faixa 4%, penalidade Viterbi 0,12, onset 1,6×, rastreador LAM 60 / MU 2–10).
 2. Diagramas feitos (violão e teclado, 25/11/2026). Falta tablatura e afinador de baixo (cordas E1 A1 D2 G2).
 3. PDF feito (impressão, 25/11/2026). Falta MusicXML para abrir no MuseScore.
 4. ~~Edição manual~~ (feito 25/11/2026). Próximo: corrigir também notas da melodia.
