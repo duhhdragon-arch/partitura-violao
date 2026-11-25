@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Violão para partitura</title>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#151515"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800&family=Inter:wght@400;600&family=Noto+Music&display=swap" rel="stylesheet">
+<style>
+/* VOICE: oficina de músico — direto, prático, como um caderno de cifras bem feito
+   IDEA: uma folha de partitura (lead sheet) que se escreve sozinha enquanto o violão toca
+   PICTURE: a própria folha: pauta com clave, barras, cifras acima e marcação de ritmo
+   COLOUR and TYPE: papel branco, tinta preta, um azul cobalto de caneta para o compasso atual; Archivo + Inter, clave em Noto Music
+   LAYOUT: título curto, folha grande logo abaixo, controles numa faixa entre os dois, explicação curta no fim */
+:root{color-scheme:light dark;--bg:light-dark(#f4f3ef,#121417);--paper:light-dark(#fff,#1b1e23);--ink:light-dark(#151515,#ece9e2);--mute:light-dark(#5d5b57,#a4a29c);--line:light-dark(#d8d6d0,#353a42);--acc:light-dark(#2346d6,#8aa4ff);--accbg:light-dark(#e6ebff,#22305f)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(20px,3.5vw,48px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font:800 clamp(30px,4.6vw,48px)/1.05 Archivo,sans-serif;margin:0 0 6px;text-wrap:balance}
+h2{font:800 24px/1.15 Archivo,sans-serif;margin:0 0 10px}
+.lede{color:var(--mute);margin:0;max-width:62ch}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0 14px}
+button,.file{font:600 15px Inter,sans-serif;min-height:44px;padding:0 16px;border-radius:10px;border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+button:focus-visible,.file:focus-within{outline:3px solid var(--acc);outline-offset:2px}
+.pri{background:var(--ink);color:var(--paper)}
+.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden}
+.seg button{border:0;border-radius:0;min-width:44px}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.file input{position:absolute;opacity:0;width:1px;height:1px}
+.chips{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:15px;color:var(--mute)}
+.chips b{color:var(--ink);font:800 18px Archivo,sans-serif;margin-left:4px}
+.sheet{background:var(--paper);border-radius:14px;box-shadow:0 1px 0 var(--line),0 18px 40px -24px rgba(0,0,0,.35);padding:22px clamp(10px,2.5vw,32px) 28px;margin-top:14px}
+.sheet h3{font:800 clamp(20px,2.6vw,28px)/1.1 Archivo,sans-serif;text-align:center;margin:4px 0 2px}
+.sheet .sub{text-align:center;color:var(--mute);font-size:14px;margin-bottom:10px}
+#score svg{display:block;width:100%;overflow:visible}
+#msg{min-height:24px;font-size:15px;color:var(--mute);margin-top:10px}
+.hl{fill:var(--accbg);opacity:0;transition:opacity .15s}.hl.on{opacity:1}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:24px 40px}
+.cols p{margin:0 0 8px}
+.ok{color:var(--acc);font-weight:600}
+pre{background:var(--paper);border-radius:10px;padding:14px;font-size:14px;overflow-x:auto;border:1px solid var(--line)}
+.live{display:flex;align-items:center;gap:14px 18px;flex-wrap:wrap;background:var(--ink);color:var(--paper);border-radius:14px;padding:14px 20px;margin-top:14px}
+.live b{font:800 clamp(40px,8vw,64px)/1 Archivo,sans-serif;min-width:2.2em}
+.live #lvH{font:600 16px Archivo,sans-serif;opacity:.7;overflow:hidden;white-space:nowrap;flex:1 1 200px}
+.dot{width:14px;height:14px;border-radius:50%;background:#ff4b3e;animation:pu 1s infinite}
+@keyframes pu{50%{opacity:.3}}
+#rec.on{background:#d92b1e;border-color:#d92b1e;color:#fff}
+@media(prefers-reduced-motion:reduce){.dot{animation:none}}
+@media(prefers-reduced-motion:reduce){.hl{transition:none}}
+@media(max-width:600px){.chips b{font-size:16px}}
+</style></head><body>
+<section class="band"><div class="wrap">
+<h1>Do violão para a partitura</h1>
+<p class="lede">Toque perto do microfone ou envie uma gravação do violão (do celular serve, até em vídeo). A página descobre o andamento, o tom e os acordes, e escreve a cifra numa pauta. No modo Melodia, notas tocadas uma de cada vez viram notas na pauta.</p>
+<div class="bar">
+ <button class="pri" id="rec">● Gravar</button>
+ <label class="file" id="upl">Enviar gravação<input type="file" id="f" accept="audio/*,video/*"></label>
+ <button id="play" disabled>▶ Ouvir</button>
+ <div class="seg" role="group" aria-label="Modo"><button id="mC" aria-pressed="true">Cifra</button><button id="mM" aria-pressed="false">Melodia</button></div>
+ <div class="seg" role="group" aria-label="Transpor"><button id="tD" aria-label="Baixar meio tom">−½</button><button id="tU" aria-label="Subir meio tom">+½</button></div>
+ <div class="seg" role="group" aria-label="Andamento"><button id="bH" title="Metade do andamento">½×</button><button id="bD" title="Dobro do andamento">2×</button></div>
+ <div class="seg" role="group" aria-label="Compasso"><button id="m4" aria-pressed="true">4/4</button><button id="m3" aria-pressed="false">3/4</button></div>
+ <button id="copy">Copiar cifra</button>
+</div>
+<div class="chips"><span>Tom<b id="kKey">–</b></span><span>Andamento<b id="kBpm">–</b></span><span>Compassos<b id="kBars">–</b></span><span>Transposição<b id="kTr">0</b></span></div>
+<div class="live" id="live" hidden><span class="dot"></span><span id="lvT">0:00</span><b id="lvC">…</b><span id="lvH"></span></div>
+<div class="sheet"><h3 id="ttl">Exemplo: C – Am – F – G</h3><div class="sub" id="sub">gravação de demonstração gerada aqui mesmo · violão soa uma oitava abaixo do escrito</div><div id="score"></div></div>
+<div id="msg" role="status"></div>
+</div></section>
+<section class="band" style="padding-top:0"><div class="wrap cols">
+<div><h2>O que funciona bem</h2><p><span class="ok">Acordes e cifra.</span> O som é decomposto nas 12 notas da escala e comparado com moldes de acordes maiores, menores e com sétima, batida por batida.</p><p><span class="ok">Andamento e tom.</span> Os ataques das batidas marcam o pulso; o conjunto das notas indica o tom.</p></div>
+<div><h2>Onde ainda erra</h2><p>Acordes com nona, suspensos ou com baixo trocado (C/E) saem simplificados. A melodia só funciona com uma nota por vez, sem acompanhamento. Se o andamento sair o dobro ou a metade, use ½× ou 2×.</p></div>
+<div><h2>Dica de gravação</h2><p>Grave perto do violão, num lugar quieto. Celular tocando outro celular funciona, mas alto-falante pequeno perde o grave: uma caixinha de som ajuda. Toque em Gravar, e comece tocando: silêncio longo no começo atrapalha achar o primeiro compasso. Arquivos de até 4 minutos.</p></div>
+</div></section>
+<script>
+{
+const SR=22050,N=4096,HOP=512,FPS=SR/HOP;
+const $=id=>document.getElementById(id);
+const SH=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FL=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const Q=[{s:'',iv:[0,4,7],b:0},{s:'m',iv:[0,3,7],b:0},{s:'7',iv:[0,4,7,10],b:-.04},{s:'m7',iv:[0,3,7,10],b:-.04}];
+const TPL=[];Q.forEach((q,qi)=>{for(let r=0;r<12;r++){const v=new Float32Array(12);q.iv.forEach((i,j)=>[0,0,7,0,4].forEach((o,hh)=>v[(r+i+o)%12]+=(j==0?1:.85)*.6**hh));let n=Math.hypot(...v);TPL.push({r,qi,v:v.map(x=>x/n),b:q.b})}});
+let st={mode:'cifra',tr:0,bpb:4,buf:null,F:null,A:null,lagMul:1,ctx:null,src:null,t0:0,raf:0};
+
+function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t}}
+ for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a),h=len>>1;for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let k=0;k<h;k++){const p=i+k,q=p+h,tr=re[q]*cr-im[q]*ci,ti=re[q]*ci+im[q]*cr;re[q]=re[p]-tr;im[q]=im[p]-ti;re[p]+=tr;im[p]+=ti;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t}}}}
+
+function frames(x){
+ const win=new Float32Array(N).map((_,i)=>.5-.5*Math.cos(2*Math.PI*i/N));
+ const nF=Math.max(1,Math.floor((x.length-N)/HOP)+1),lo=Math.floor(55*N/SR),hi=Math.ceil(1760*N/SR);
+ const pc=new Int8Array(hi+1),w=new Float32Array(hi+1);
+ for(let k=lo;k<=hi;k++){const m=69+12*Math.log2(k*SR/N/440),r=Math.round(m);pc[k]=((r%12)+12)%12;w[k]=Math.cos((m-r)*Math.PI)**2}
+ const chroma=[],rms=new Float32Array(nF),flux=new Float32Array(nF),pitch=new Int16Array(nF).fill(-1);
+ const re=new Float32Array(N),im=new Float32Array(N),mag=new Float32Array(N/2),prev=new Float32Array(hi+1);
+ for(let f=0;f<nF;f++){const o=f*HOP;let s=0;for(let i=0;i<N;i++){const v=x[o+i]||0;s+=v*v;re[i]=v*win[i];im[i]=0}rms[f]=Math.sqrt(s/N);fft(re,im);
+  for(let k=0;k<N/2;k++)mag[k]=Math.hypot(re[k],im[k]);
+  const c=new Float32Array(12);let fl=0,tot=0;
+  for(let k=lo;k<=hi;k++){const lm=Math.log1p(mag[k]*10),d=lm-prev[k];if(d>0)fl+=d;prev[k]=lm;c[pc[k]]+=mag[k]*w[k];tot+=mag[k]}
+  flux[f]=fl;chroma.push(c);
+  const sal=m=>{const f0=440*2**((m-69)/12);let sa=0;for(let h=1;h<=6;h++){const k=Math.round(h*f0*N/SR);if(k+1>=N/2)break;sa+=Math.max(mag[k-1],mag[k],mag[k+1])/Math.sqrt(h)}return sa};
+  let best=0,bm=-1;for(let m=40;m<=88;m++){const sa=sal(m);if(sa>best){best=sa;bm=m}}
+  if(bm>0)for(const d of[24,19,12])if(bm-d>=40&&sal(bm-d)>=.75*best){bm-=d;break}
+  if(tot>0&&best/tot>.06)pitch[f]=bm}
+ return{chroma,rms,flux,pitch,nF}}
+
+function beatsOf(F){
+ const o=F.flux,n=o.length,e=new Float32Array(n);
+ for(let i=0;i<n;i++){let m=0,c=0;for(let j=Math.max(0,i-16);j<=Math.min(n-1,i+16);j++){m+=o[j];c++}e[i]=Math.max(0,o[i]-m/c)}
+ let sd=0;for(const v of e)sd+=v*v;sd=Math.sqrt(sd/n)||1;for(let i=0;i<n;i++)e[i]/=sd;
+ let L=0,best=-1;for(let l=Math.round(FPS*60/190);l<=Math.round(FPS*60/55);l++){let s=0;for(let i=0;i+l<n;i++)s+=e[i]*e[i+l];s/=Math.max(1,n-l);const bpm=60*FPS/l;s*=Math.exp(-.5*(Math.log2(bpm/105)/.9)**2);if(s>best){best=s;L=l}}
+ L*=st.lagMul;L=Math.max(6,Math.min(L,FPS*2.4));
+ const cs=new Float32Array(n),bp=new Int32Array(n).fill(-1);
+ for(let t=0;t<n;t++){let bv=-1e9,bi=-1;for(let p=Math.max(0,t-Math.round(2*L));p<=t-Math.round(L/2);p++){const v=cs[p]-400*Math.log((t-p)/L)**2;if(v>bv){bv=v;bi=p}}
+  if(bi>=0&&bv>0){cs[t]=e[t]+bv;bp[t]=bi}else cs[t]=e[t]}
+ let t=n-1,bv=-1;for(let i=Math.max(0,n-Math.round(L));i<n;i++)if(cs[i]>bv){bv=cs[i];t=i}
+ const b=[];while(t>=0){b.push(t);t=bp[t]}b.reverse();
+ const d=b.slice(1).map((v,i)=>v-b[i]).sort((a,c)=>a-c);const per=d.length?d[d.length>>1]:L;
+ while(b[0]-per>=0)b.unshift(b[0]-per);
+ return{beats:b,per,bpm:Math.round(60*FPS/per)}}
+
+function analyse(){
+ const F=st.F,{beats,per,bpm}=beatsOf(F),n=F.nF;
+ let mx=0;for(const v of F.rms)mx=Math.max(mx,v);const thr=mx*.06;
+ const em=[],sil=[];
+ beats.forEach((b,i)=>{const e=Math.min(n,i+1<beats.length?beats[i+1]:b+per);const c=new Float32Array(12);let r=0;for(let f=b;f<e;f++){for(let k=0;k<12;k++)c[k]+=F.chroma[f][k];r+=F.rms[f]}r/=Math.max(1,e-b);
+  const q=r<thr;sil.push(q);let m=Math.max(...c)||1;const cn=c.map(v=>v/m);
+  const nn=Math.hypot(...cn)||1;em.push(TPL.map(t=>{let s=0;for(let k=0;k<12;k++)s+=t.v[k]*cn[k];return s/nn+t.b}).concat([q?1.2:0]))});
+ const S=TPL.length+1,P=.12;let sc=em[0]?em[0].slice():[],bk=[];
+ for(let i=1;i<em.length;i++){let bi=0;for(let s=1;s<S;s++)if(sc[s]>sc[bi])bi=s;const ns=[],nb=[];for(let s=0;s<S;s++){const sw=sc[bi]-P;if(sc[s]>=sw){ns.push(sc[s]+em[i][s]);nb.push(s)}else{ns.push(sw+em[i][s]);nb.push(bi)}}sc=ns;bk.push(nb)}
+ const path=new Array(em.length);if(em.length){let s=0;for(let k=1;k<S;k++)if(sc[k]>sc[s])s=k;for(let i=em.length-1;i>=0;i--){path[i]=s;if(i>0)s=bk[i-1][s]}}
+ const cnt=new Float32Array(TPL.length);path.forEach(s=>{if(s<TPL.length)cnt[s]++});
+ const ci=(r,mi)=>{let s=0;for(let q=0;q<4;q++)s+=cnt[q*12+((r%12)+12)%12]*((q%2==1)==mi?1:0);return s};
+ let key={r:0,mi:false},kb=-1;for(let r=0;r<12;r++){const dia=ci(r,false)+ci(r+2,true)+ci(r+4,true)+ci(r+5,false)+ci(r+7,false)+ci(r+9,true);
+  const mj=dia+.6*ci(r,false)+.2*ci(r+7,false),mn=dia+.6*ci(r+9,true)+ci(r+4,false);
+  if(mj>kb){kb=mj;key={r,mi:false}}if(mn>kb){kb=mn;key={r:(r+9)%12,mi:true}}}
+ let b0=path.findIndex(s=>s<TPL.length);if(b0<0)b0=0;
+ let last=path.length-1;while(last>b0&&path[last]==TPL.length)last--;
+ const bt=i=>i<beats.length?beats[i]/FPS:(beats[beats.length-1]+(i-beats.length+1)*per)/FPS;
+ const bars=[];for(let i=b0;i<=last;i+=st.bpb){const ch=[];for(let k=0;k<st.bpb;k++){const s=path[i+k];if(s===undefined)break;const prevS=k==0?-1:path[i+k-1];if(s<TPL.length&&(k==0||s!=prevS))ch.push({pos:k,t:TPL[s]});else if(s==TPL.length&&k==0)ch.push({pos:0,t:null})}bars.push({t0:bt(i),t1:bt(i+st.bpb),ch,notes:[]})}
+ const beatPos=f=>{let lo=0,hi=beats.length-1;if(f<=beats[0])return(f-beats[0])/per;if(f>=beats[hi])return hi+(f-beats[hi])/per;while(hi-lo>1){const m=(lo+hi)>>1;if(beats[m]<=f)lo=m;else hi=m}return lo+(f-beats[lo])/(beats[hi]-beats[lo])};
+ const fx=F.flux,on=[];for(let i=1;i<n-1;i++){let m=0,c=0;for(let j=Math.max(0,i-20);j<=Math.min(n-1,i+20);j++){m+=fx[j];c++}if(fx[i]>1.6*m/c&&fx[i]>=fx[i-1]&&fx[i]>=fx[i+1]&&F.rms[i+1]>thr&&(!on.length||i-on[on.length-1]>4))on.push(i)}
+ on.push(n);for(let k=0;k+1<on.length;k++){const a=on[k];let e=on[k+1];const h={};let v=0;for(let f=a+2;f<e;f++){if(F.rms[f]<thr){e=f;break}if(F.pitch[f]>0){h[F.pitch[f]]=(h[F.pitch[f]]||0)+1;v++}}
+  if(v<3)continue;let m=-1,bc=0;for(const q in h)if(h[q]>bc){bc=h[q];m=+q}if(bc<v*.4)continue;
+  const s=Math.round(beatPos(a)*2)/2-b0,d=Math.max(.5,Math.round((beatPos(e)-beatPos(a))*2)/2),bi=Math.floor(s/st.bpb);
+  if(bars[bi]){const pos=s-bi*st.bpb,nt=bars[bi].notes;if(!nt.length||nt[nt.length-1].pos!=pos)nt.push({pos,dur:Math.min(d,st.bpb-pos),m})}}
+ st.A={bars,bpm,key};render()}
+
+const flatKey=k=>{const r=(k.r+st.tr+120)%12;return k.mi?[2,7,0,5,10,3].includes(r):[5,10,3,8,1,6].includes(r)};
+const nm=(r,fl)=>(fl?FL:SH)[(r+st.tr+120)%12];
+const chName=(t,fl)=>t?nm(t.r,fl)+Q[t.qi].s:'—';
+
+function render(){
+ const A=st.A;if(!A)return;const fl=flatKey(A.key);
+ $('kKey').textContent=nm(A.key.r,fl)+(A.key.mi?' menor':' maior');$('kBpm').textContent=A.bpm+' bpm';$('kBars').textContent=A.bars.length;$('kTr').textContent=(st.tr>0?'+':'')+st.tr;
+ const box=$('score'),W=Math.max(300,box.clientWidth),per=W<560?2:4,G=8,H=150,top=64,bot=top+4*G;
+ const sys=[];for(let i=0;i<A.bars.length;i+=per)sys.push(A.bars.slice(i,i+per));
+ const midY=top+2*G;let out='';
+ sys.forEach((bs,si)=>{const lm=si==0?70:44,bw=(W-lm)/per;let g=`<g transform="translate(0,${si*H})">`;
+  bs.forEach((b,k)=>{const bi=si*per+k;g+=`<rect class="hl" data-b="${bi}" x="${lm+k*bw}" y="${top-46}" width="${bw}" height="${4*G+86}" rx="6"/>`});
+  for(let l=0;l<5;l++)g+=`<line x1="0" x2="${lm+bs.length*bw}" y1="${top+l*G}" y2="${top+l*G}" stroke="currentColor" stroke-width="1"/>`;
+  g+=`<text x="4" y="${bot-G}" font-family="'Noto Music'" font-size="${4*G}">𝄞</text><text x="12" y="${bot+22}" font-size="10" font-weight="600">8</text>`;
+  if(si==0)g+=`<text x="40" y="${top+2*G-2}" font-family="Archivo" font-weight="800" font-size="19">${st.bpb}</text><text x="40" y="${bot-2}" font-family="Archivo" font-weight="800" font-size="19">4</text>`;
+  g+=`<text x="${lm}" y="${top-34}" font-size="11" fill="var(--mute)">${si*per+1}</text>`;
+  bs.forEach((b,k)=>{const x0=lm+k*bw,pad=16,step=(bw-pad*1.5)/st.bpb,X=pos=>x0+pad+pos*step;
+   g+=`<line x1="${x0+bw}" x2="${x0+bw}" y1="${top}" y2="${bot}" stroke="currentColor" stroke-width="${si==sys.length-1&&k==bs.length-1?3:1.2}"/>`;
+   b.ch.forEach(c=>{g+=`<text x="${X(c.pos)-4}" y="${top-14}" font-family="Archivo" font-weight="800" font-size="17">${chName(c.t,fl)}</text>`});
+   if(st.mode=='cifra'){for(let p=0;p<st.bpb;p++){const x=X(p)+2;g+=`<line x1="${x-5}" y1="${midY+6}" x2="${x+5}" y2="${midY-6}" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>`}}
+   else b.notes.forEach(nt=>{g+=note(X(nt.pos)+4,nt,fl,top,G)})});
+  out+=g+'</g>'});
+ box.innerHTML=`<svg viewBox="0 0 ${W} ${sys.length*H+10}" height="${sys.length*H+10}" style="color:var(--ink)" role="img" aria-label="Partitura com ${A.bars.length} compassos">${out||'<text x="0" y="40">Nada reconhecido.</text>'}</svg>`;
+ if(st.mode=='melodia'&&!A.bars.some(b=>b.notes.length))$('msg').textContent='Nenhuma nota isolada encontrada. O modo Melodia é para notas tocadas uma de cada vez.'}
+
+function note(x,nt,fl,top,G){
+ const m=nt.m+st.tr+12,pc=((m%12)+12)%12,oc=Math.floor(m/12)-1;
+ const L=fl?[0,1,1,2,2,3,4,4,5,5,6,6]:[0,0,1,1,2,3,3,4,4,5,5,6],acc=[1,3,6,8,10].includes(pc)?(fl?'♭':'♯'):'';
+ const s=oc*7+L[pc],bot=top+4*G,y=bot-(s-30)*G/2;let g='';
+ for(let k=28;k>=s;k-=2)g+=`<line x1="${x-9}" x2="${x+9}" y1="${bot-(k-30)*G/2}" y2="${bot-(k-30)*G/2}" stroke="currentColor"/>`;
+ for(let k=40;k<=s;k+=2)g+=`<line x1="${x-9}" x2="${x+9}" y1="${bot-(k-30)*G/2}" y2="${bot-(k-30)*G/2}" stroke="currentColor"/>`;
+ const d=nt.dur,open=d>=2;
+ g+=`<ellipse cx="${x}" cy="${y}" rx="5.4" ry="3.9" transform="rotate(-20 ${x} ${y})" fill="${open?'none':'currentColor'}" stroke="currentColor" stroke-width="${open?1.6:1}"/>`;
+ if(acc)g+=`<text x="${x-17}" y="${y+5}" font-size="15">${acc}</text>`;
+ if(d==3||d==1.5)g+=`<circle cx="${x+10}" cy="${y-2}" r="1.7" fill="currentColor"/>`;
+ if(d<4){const up=s<34,sx=up?x+5:x-5,ey=up?y-28:y+28;g+=`<line x1="${sx}" x2="${sx}" y1="${y}" y2="${ey}" stroke="currentColor" stroke-width="1.3"/>`;
+  if(d<1)g+=`<path d="M${sx} ${ey} q8 ${up?8:-8} 6 ${up?18:-18}" fill="none" stroke="currentColor" stroke-width="1.8"/>`}
+ return g}
+
+function cifraTxt(){const A=st.A;if(!A)return'';const fl=flatKey(A.key);const lines=[];for(let i=0;i<A.bars.length;i+=4)lines.push('| '+A.bars.slice(i,i+4).map(b=>(b.ch.map(c=>chName(c.t,fl)).join(' ')||'%').padEnd(9)).join('| ')+'|');
+ return`Tom: ${nm(A.key.r,fl)}${A.key.mi?'m':''} · ${A.bpm} bpm · ${st.bpb}/4\n`+lines.join('\n')}
+
+let R={on:false};
+async function recStart(){
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('msg').textContent='Este navegador não deixa usar o microfone. Abra pelo site (https) no Chrome ou Safari.';return}
+ let ms;try{ms=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})}catch(e){$('msg').textContent='Microfone bloqueado. Libere o acesso nas permissões do navegador (dentro do Claude ele não funciona: use o site).';return}
+ stop();const ctx=new AudioContext();await ctx.resume();const src=ctx.createMediaStreamSource(ms),sp=ctx.createScriptProcessor(4096,1,1),mute=ctx.createGain();mute.gain.value=0;
+ R={on:true,ctx,ms,sp,src,chunks:[],len:0,rate:ctx.sampleRate,hist:[],last:'',t0:performance.now()};
+ sp.onaudioprocess=e=>{if(!R.on)return;const d=new Float32Array(e.inputBuffer.getChannelData(0));R.chunks.push(d);R.len+=d.length;if(R.len>R.rate*240)recStop()};
+ src.connect(sp);sp.connect(mute);mute.connect(ctx.destination);
+ $('rec').textContent='■ Parar';$('rec').classList.add('on');$('live').hidden=false;$('lvC').textContent='…';$('lvH').textContent='';$('msg').textContent='Ouvindo. Toque a música e aperte Parar no fim.';
+ R.iv=setInterval(liveTick,350)}
+function tail(sec){const need=Math.round(sec*R.rate),out=new Float32Array(Math.min(need,R.len));let k=out.length;for(let i=R.chunks.length-1;i>=0&&k>0;i--){const c=R.chunks[i],n=Math.min(k,c.length);out.set(c.subarray(c.length-n),k-n);k-=n}return out}
+function rs(x,from){if(from==SR)return x;const r=from/SR,n=Math.floor(x.length/r),y=new Float32Array(n);for(let i=0;i<n;i++){const p=i*r,a=Math.floor(p),f=p-a;y[i]=(x[a]||0)*(1-f)+(x[a+1]||0)*f}return y}
+function liveTick(){const s=Math.floor((performance.now()-R.t0)/1000);$('lvT').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+ const x=rs(tail(.6),R.rate);if(x.length<N+HOP)return;let e=0;for(const v of x)e+=v*v;if(Math.sqrt(e/x.length)<.004){$('lvC').textContent='…';return}
+ const F=frames(x),c=new Float32Array(12);F.chroma.forEach(q=>{for(let k=0;k<12;k++)c[k]+=q[k]});const m=Math.max(...c)||1,cn=c.map(v=>v/m),nn=Math.hypot(...cn)||1;
+ let bi=0,bv=-9;TPL.forEach((t,i)=>{let s2=0;for(let k=0;k<12;k++)s2+=t.v[k]*cn[k];s2=s2/nn+t.b;if(s2>bv){bv=s2;bi=i}});
+ const t=TPL[bi],name=SH[t.r]+Q[t.qi].s;if(name===R.cand)R.cnt++;else{R.cand=name;R.cnt=1}
+ if(R.cnt>=2&&name!==R.last){R.last=name;R.hist.push(name);$('lvC').textContent=name;$('lvH').textContent=R.hist.slice(-12).join('  ')}}
+async function recStop(){if(!R.on)return;R.on=false;clearInterval(R.iv);R.ms.getTracks().forEach(t=>t.stop());try{R.sp.disconnect();R.src.disconnect()}catch(e){}
+ $('rec').textContent='● Gravar';$('rec').classList.remove('on');$('live').hidden=true;
+ if(R.len<R.rate*2){$('msg').textContent='Gravação curta demais. Toque pelo menos alguns compassos.';return}
+ const all=new Float32Array(R.len);let o=0;for(const c of R.chunks){all.set(c,o);o+=c.length}
+ $('ttl').textContent='Gravação de '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});$('sub').textContent='gravado pelo microfone · violão soa uma oitava abaixo do escrito';
+ try{const b=new AudioBuffer({length:all.length,sampleRate:R.rate,numberOfChannels:1});b.copyToChannel(all,0);const oc=new OfflineAudioContext(1,Math.ceil(b.duration*SR),SR),s=oc.createBufferSource();s.buffer=b;s.connect(oc.destination);s.start();run((await oc.startRendering()).getChannelData(0))}catch(e){run(rs(all,R.rate))}
+ R.ctx.close()}
+async function load(file){
+ stop();$('msg').textContent='Lendo o áudio…';
+ try{const ab=await file.arrayBuffer();const dec=await new OfflineAudioContext(1,1,SR).decodeAudioData(ab);
+  const dur=Math.min(dec.duration,240);const oc=new OfflineAudioContext(1,Math.ceil(dur*SR),SR);const s=oc.createBufferSource();s.buffer=dec;s.connect(oc.destination);s.start();const r=await oc.startRendering();
+  $('ttl').textContent=file.name.replace(/\.[^.]+$/,'');$('sub').textContent=(dec.duration>240?'primeiros 4 minutos · ':'')+'violão soa uma oitava abaixo do escrito';
+  run(r.getChannelData(0))}catch(e){$('msg').textContent='Não consegui ler esse arquivo. Tente MP3, M4A, WAV ou um vídeo MP4.'}}
+
+function run(x){st.buf=x;st.tr=0;st.lagMul=1;$('msg').textContent='Analisando…';$('play').disabled=false;
+ setTimeout(()=>{let m=0;for(const v of x)m=Math.max(m,Math.abs(v));if(m>0&&m<.5){const g=.5/m;for(let i=0;i<x.length;i++)x[i]*=g}
+  st.F=frames(x);analyse();$('msg').textContent='Pronto. Confira ouvindo: o compasso que está tocando fica destacado.'},30)}
+
+function demo(){const bpm=96,b=60/bpm,prog=[[48,52,55,60,64],[45,52,57,60,64],[41,48,53,57,60,65],[43,47,50,55,59,67]],bars=8;
+ const x=new Float32Array(Math.ceil((bars*4*b+1.5)*SR)),st0=Math.round(.15*SR);
+ for(let i=0;i<bars;i++){const v=prog[i%4];for(let k=0;k<4;k++){const t0=st0+Math.round((i*4+k)*b*SR),dn=k%2==0,ns=dn?v:[...v].reverse().slice(0,4);ns.forEach((m,j)=>pluck(x,t0+j*Math.round(.012*SR),m,Math.round(b*SR*1.05),dn?.25:.14))}}
+ return x}
+function pluck(x,t0,m,dur,amp){const L=Math.round(SR/(440*2**((m-69)/12))),d=new Float32Array(L);for(let i=0;i<L;i++)d[i]=Math.random()*2-1;let p=0;for(let i=0;i<dur&&t0+i<x.length;i++){const q=(p+1)%L,v=d[p];d[p]=.4985*(d[p]+d[q]);x[t0+i]+=v*amp*(i>dur-220?(dur-i)/220:1);p=q}}
+
+function stop(){if(st.src){try{st.src.stop()}catch(e){}st.src=null}cancelAnimationFrame(st.raf);$('play').textContent='▶ Ouvir';document.querySelectorAll('.hl.on').forEach(r=>r.classList.remove('on'))}
+function play(){if(st.src){stop();return}try{st.ctx=st.ctx||new AudioContext();st.ctx.resume();const b=st.ctx.createBuffer(1,st.buf.length,SR);b.copyToChannel(st.buf,0);const s=st.ctx.createBufferSource();s.buffer=b;s.connect(st.ctx.destination);s.start();st.src=s;st.t0=st.ctx.currentTime;s.onended=()=>{if(st.src===s)stop()};$('play').textContent='❚❚ Parar';tick()}catch(e){$('msg').textContent='O navegador não deixou tocar o áudio aqui.'}}
+function tick(){const t=st.ctx.currentTime-st.t0,bi=st.A?st.A.bars.findIndex(b=>t>=b.t0&&t<b.t1):-1;document.querySelectorAll('.hl').forEach(r=>r.classList.toggle('on',+r.dataset.b===bi));st.raf=requestAnimationFrame(tick)}
+
+$('rec').addEventListener('click',()=>R.on?recStop():recStart());
+$('f').addEventListener('change',e=>{const f=e.target.files[0];if(f)load(f)});
+$('play').addEventListener('click',play);
+const setMode=m=>{st.mode=m;$('mC').setAttribute('aria-pressed',m=='cifra');$('mM').setAttribute('aria-pressed',m=='melodia');$('msg').textContent='';render()};
+$('mC').addEventListener('click',()=>setMode('cifra'));$('mM').addEventListener('click',()=>setMode('melodia'));
+$('tD').addEventListener('click',()=>{st.tr--;render()});$('tU').addEventListener('click',()=>{st.tr++;render()});
+const re=()=>{if(st.F){stop();analyse()}};
+$('bH').addEventListener('click',()=>{st.lagMul*=2;re()});$('bD').addEventListener('click',()=>{st.lagMul/=2;re()});
+const setM=n=>{st.bpb=n;$('m4').setAttribute('aria-pressed',n==4);$('m3').setAttribute('aria-pressed',n==3);re()};
+$('m4').addEventListener('click',()=>setM(4));$('m3').addEventListener('click',()=>setM(3));
+$('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(cifraTxt());$('msg').textContent='Cifra copiada.'}catch(e){$('msg').textContent=cifraTxt()}});
+const ro=new ResizeObserver(()=>render());ro.observe($('score'));
+document.fonts&&document.fonts.ready.then(render);
+run(demo());
+}
+</script></body></html>
