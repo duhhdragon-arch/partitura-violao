@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Violão para partitura</title>
+<title>Violão e teclado para partitura</title>
 <link rel="manifest" href="manifest.json"><meta name="theme-color" content="#151515"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800&family=Inter:wght@400;600&family=Noto+Music&display=swap" rel="stylesheet">
@@ -13,6 +13,9 @@
 :root{color-scheme:light dark;--bg:light-dark(#f4f3ef,#121417);--paper:light-dark(#fff,#1b1e23);--ink:light-dark(#151515,#ece9e2);--mute:light-dark(#5d5b57,#a4a29c);--line:light-dark(#d8d6d0,#353a42);--acc:light-dark(#2346d6,#8aa4ff);--accbg:light-dark(#e6ebff,#22305f)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+.ins{margin:20px 0 0}
+.ins .lbl{font:600 14px Inter,sans-serif;color:var(--mute)}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
 .band{padding:clamp(20px,3.5vw,48px) max(5vw,16px)}
 .wrap{max-width:1240px;margin:0 auto}
@@ -50,8 +53,13 @@ pre{background:var(--paper);border-radius:10px;padding:14px;font-size:14px;overf
 @media(max-width:600px){.chips b{font-size:16px}}
 </style></head><body>
 <section class="band"><div class="wrap">
-<h1>Do violão para a partitura</h1>
-<p class="lede">Toque perto do microfone ou envie uma gravação do violão (do celular serve, até em vídeo). A página descobre o andamento, o tom e os acordes, e escreve a cifra numa pauta. No modo Melodia, notas tocadas uma de cada vez viram notas na pauta.</p>
+<h1>Do violão e do teclado para a partitura</h1>
+<p class="lede">Escolha o instrumento, toque perto do microfone ou envie uma gravação (do celular serve, até em vídeo). A página descobre o andamento, o tom e os acordes, e escreve a cifra numa pauta. No modo Melodia, notas tocadas uma de cada vez viram notas na pauta.</p>
+<div class="bar ins">
+ <span class="lbl">Instrumento</span>
+ <div class="seg" role="group" aria-label="Instrumento"><button id="iV" aria-pressed="true">Violão</button><button id="iT" aria-pressed="false">Teclado</button></div>
+ <div class="seg" role="group" aria-label="Timbre do teclado" id="tim" hidden><button data-t="piano" aria-pressed="false">Piano</button><button data-t="orgao" aria-pressed="false">Órgão</button><button data-t="strings" aria-pressed="false">Strings</button><button data-t="pad" aria-pressed="false">Pad</button></div>
+</div>
 <div class="bar">
  <button class="pri" id="rec">● Gravar</button>
  <label class="file" id="upl">Enviar gravação<input type="file" id="f" accept="audio/*,video/*"></label>
@@ -68,8 +76,8 @@ pre{background:var(--paper);border-radius:10px;padding:14px;font-size:14px;overf
 <div id="msg" role="status"></div>
 </div></section>
 <section class="band" style="padding-top:0"><div class="wrap cols">
-<div><h2>O que funciona bem</h2><p><span class="ok">Acordes e cifra.</span> O som é decomposto nas 12 notas da escala e comparado com moldes de acordes maiores, menores e com sétima, batida por batida.</p><p><span class="ok">Andamento e tom.</span> Os ataques das batidas marcam o pulso; o conjunto das notas indica o tom.</p></div>
-<div><h2>Onde ainda erra</h2><p>Acordes com nona, suspensos ou com baixo trocado (C/E) saem simplificados. A melodia só funciona com uma nota por vez, sem acompanhamento. Se o andamento sair o dobro ou a metade, use ½× ou 2×.</p></div>
+<div><h2>O que funciona bem</h2><p><span class="ok">Acordes e cifra.</span> O som é decomposto nas 12 notas da escala e comparado com moldes de acordes maiores, menores e com sétima, batida por batida.</p><p><span class="ok">Andamento e tom.</span> Os ataques das batidas marcam o pulso; o conjunto das notas indica o tom.</p><p><span class="ok">Teclado.</span> Piano, órgão, strings e pad. No modo Melodia o teclado usa pauta dupla: clave de sol para a mão direita, clave de fá para a esquerda.</p></div>
+<div><h2>Onde ainda erra</h2><p>Acordes com nona, suspensos ou com baixo trocado (C/E) saem simplificados. A melodia só funciona com uma nota por vez, sem acompanhamento. Se o andamento sair o dobro ou a metade, use ½× ou 2×.</p><p>Pad e strings entram devagar, sem ataque marcado: o andamento é deduzido pelas trocas de acorde. Confira ouvindo e corrija com ½× ou 2× se precisar.</p></div>
 <div><h2>Dica de gravação</h2><p>Grave perto do violão, num lugar quieto. Celular tocando outro celular funciona, mas alto-falante pequeno perde o grave: uma caixinha de som ajuda. Toque em Gravar, e comece tocando: silêncio longo no começo atrapalha achar o primeiro compasso. Arquivos de até 4 minutos.</p></div>
 </div></section>
 <script>
@@ -79,13 +87,24 @@ const $=id=>document.getElementById(id);
 const SH=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FL=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
 const Q=[{s:'',iv:[0,4,7],b:0},{s:'m',iv:[0,3,7],b:0},{s:'7',iv:[0,4,7,10],b:-.04},{s:'m7',iv:[0,3,7,10],b:-.04}];
 const TPL=[];Q.forEach((q,qi)=>{for(let r=0;r<12;r++){const v=new Float32Array(12);q.iv.forEach((i,j)=>[0,0,7,0,4].forEach((o,hh)=>v[(r+i+o)%12]+=(j==0?1:.85)*.6**hh));let n=Math.hypot(...v);TPL.push({r,qi,v:v.map(x=>x/n),b:q.b})}});
-let st={mode:'cifra',tr:0,bpb:4,buf:null,F:null,A:null,lagMul:1,ctx:null,src:null,t0:0,raf:0};
+// Perfis de instrumento. clef: 'g8' (sol com 8, soa oitava abaixo) | 'grand' (pauta dupla do teclado)
+// tr: semitons somados para escrever; lo/hi: faixa MIDI do pitch; wC: peso das trocas de acorde no ritmo; pen: penalidade Viterbi
+const INS={
+ violao:{n:'Violão',clef:'g8',tr:12,lo:40,hi:88,wC:0,pen:.12},
+ piano:{n:'Piano',clef:'grand',tr:0,lo:36,hi:96,wC:.4,pen:.12},
+ orgao:{n:'Órgão',clef:'grand',tr:0,lo:36,hi:96,wC:1.2,pen:.15},
+ strings:{n:'Strings',clef:'grand',tr:0,lo:36,hi:96,wC:2,pen:.18},
+ pad:{n:'Pad',clef:'grand',tr:0,lo:36,hi:96,wC:2,pen:.18}};
+let saved=null;try{saved=localStorage.getItem('partitura.ins')}catch(e){}
+const okIns=k=>Object.prototype.hasOwnProperty.call(INS,k);
+let st={mode:'cifra',tr:0,bpb:4,buf:null,F:null,A:null,lagMul:1,ctx:null,src:null,t0:0,raf:0,ins:okIns(saved)?saved:'violao',lastKb:'piano',demo:false,pre:''};
+const prof=()=>INS[st.ins];
 
 function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t}}
  for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a),h=len>>1;for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let k=0;k<h;k++){const p=i+k,q=p+h,tr=re[q]*cr-im[q]*ci,ti=re[q]*ci+im[q]*cr;re[q]=re[p]-tr;im[q]=im[p]-ti;re[p]+=tr;im[p]+=ti;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t}}}}
 
 function frames(x){
- const win=new Float32Array(N).map((_,i)=>.5-.5*Math.cos(2*Math.PI*i/N));
+ const P=prof(),win=new Float32Array(N).map((_,i)=>.5-.5*Math.cos(2*Math.PI*i/N));
  const nF=Math.max(1,Math.floor((x.length-N)/HOP)+1),lo=Math.floor(55*N/SR),hi=Math.ceil(1760*N/SR);
  const pc=new Int8Array(hi+1),w=new Float32Array(hi+1);
  for(let k=lo;k<=hi;k++){const m=69+12*Math.log2(k*SR/N/440),r=Math.round(m);pc[k]=((r%12)+12)%12;w[k]=Math.cos((m-r)*Math.PI)**2}
@@ -97,16 +116,25 @@ function frames(x){
   for(let k=lo;k<=hi;k++){const lm=Math.log1p(mag[k]*10),d=lm-prev[k];if(d>0)fl+=d;prev[k]=lm;c[pc[k]]+=mag[k]*w[k];tot+=mag[k]}
   flux[f]=fl;chroma.push(c);
   const sal=m=>{const f0=440*2**((m-69)/12);let sa=0;for(let h=1;h<=6;h++){const k=Math.round(h*f0*N/SR);if(k+1>=N/2)break;sa+=Math.max(mag[k-1],mag[k],mag[k+1])/Math.sqrt(h)}return sa};
-  let best=0,bm=-1;for(let m=40;m<=88;m++){const sa=sal(m);if(sa>best){best=sa;bm=m}}
-  if(bm>0)for(const d of[24,19,12])if(bm-d>=40&&sal(bm-d)>=.75*best){bm-=d;break}
+  let best=0,bm=-1;for(let m=P.lo;m<=P.hi;m++){const sa=sal(m);if(sa>best){best=sa;bm=m}}
+  if(bm>0)for(const d of[24,19,12])if(bm-d>=P.lo&&sal(bm-d)>=.75*best){bm-=d;break}
   if(tot>0&&best/tot>.06)pitch[f]=bm}
  return{chroma,rms,flux,pitch,nF}}
 
 function beatsOf(F){
- const o=F.flux,n=o.length,e=new Float32Array(n);
+ const P=prof(),o=F.flux,n=o.length,e=new Float32Array(n);
  for(let i=0;i<n;i++){let m=0,c=0;for(let j=Math.max(0,i-16);j<=Math.min(n-1,i+16);j++){m+=o[j];c++}e[i]=Math.max(0,o[i]-m/c)}
  let sd=0;for(const v of e)sd+=v*v;sd=Math.sqrt(sd/n)||1;for(let i=0;i<n;i++)e[i]/=sd;
- let L=0,best=-1;for(let l=Math.round(FPS*60/190);l<=Math.round(FPS*60/55);l++){let s=0;for(let i=0;i+l<n;i++)s+=e[i]*e[i+l];s/=Math.max(1,n-l);const bpm=60*FPS/l;s*=Math.exp(-.5*(Math.log2(bpm/105)/.9)**2);if(s>best){best=s;L=l}}
+ // Timbres sem ataque (pad, strings, órgão): soma a "novidade harmônica" (quanto o acorde mudou) ao envelope de ataques
+ if(P.wC>0){const u=F.chroma.map(c=>{const h=Math.hypot(...c)||1;return c.map(v=>v/h)});let mr=0;for(const v of F.rms)mr=Math.max(mr,v);
+  const nv=new Float32Array(n),W=4,a=new Float32Array(12),b=new Float32Array(12);
+  for(let i=W;i+W<=n;i++){a.fill(0);b.fill(0);for(let j=0;j<W;j++)for(let k=0;k<12;k++){a[k]+=u[i+j][k];b[k]+=u[i-1-j][k]}let d=0;for(let k=0;k<12;k++)d+=a[k]*b[k];
+   nv[i]=Math.max(0,1-d/((Math.hypot(...a)*Math.hypot(...b))||1))*Math.min(1,F.rms[i]/(.1*mr||1))}
+  let sv=0;for(const v of nv)sv+=v*v;sv=Math.sqrt(sv/n)||1;for(let i=0;i<n;i++)e[i]+=P.wC*nv[i]/sv}
+ const lo=Math.round(FPS*60/190),hi=Math.round(FPS*60/55),r=new Float32Array(hi*Math.max(2,st.bpb)+1);
+ for(let l=lo;l<r.length;l++){let s=0;for(let i=0;i+l<n;i++)s+=e[i]*e[i+l];r[l]=s/Math.max(1,n-l)}
+ // Pente: com wC>0 também conta a periodicidade em 2 batidas e em 1 compasso (trocas de acorde por compasso)
+ let L=0,best=-1;for(let l=lo;l<=hi;l++){let s=r[l]+(P.wC>0?.5*r[2*l]+.5*r[st.bpb*l]:0);const bpm=60*FPS/l;s*=Math.exp(-.5*(Math.log2(bpm/105)/.9)**2);if(s>best){best=s;L=l}}
  L*=st.lagMul;L=Math.max(6,Math.min(L,FPS*2.4));
  const cs=new Float32Array(n),bp=new Int32Array(n).fill(-1);
  for(let t=0;t<n;t++){let bv=-1e9,bi=-1;for(let p=Math.max(0,t-Math.round(2*L));p<=t-Math.round(L/2);p++){const v=cs[p]-400*Math.log((t-p)/L)**2;if(v>bv){bv=v;bi=p}}
@@ -121,10 +149,12 @@ function analyse(){
  const F=st.F,{beats,per,bpm}=beatsOf(F),n=F.nF;
  let mx=0;for(const v of F.rms)mx=Math.max(mx,v);const thr=mx*.06;
  const em=[],sil=[];
- beats.forEach((b,i)=>{const e=Math.min(n,i+1<beats.length?beats[i+1]:b+per);const c=new Float32Array(12);let r=0;for(let f=b;f<e;f++){for(let k=0;k<12;k++)c[k]+=F.chroma[f][k];r+=F.rms[f]}r/=Math.max(1,e-b);
+ // Timbres lentos (wC ≥ 1): o acorde novo demora a crescer, então ignora os primeiros 40% de cada batida
+ const skip=prof().wC>=1?.4:0;
+ beats.forEach((b,i)=>{const e=Math.min(n,i+1<beats.length?beats[i+1]:b+per);const c=new Float32Array(12);let r=0;const f0=b+Math.floor((e-b)*skip);for(let f=f0;f<e;f++){for(let k=0;k<12;k++)c[k]+=F.chroma[f][k];r+=F.rms[f]}r/=Math.max(1,e-f0);
   const q=r<thr;sil.push(q);let m=Math.max(...c)||1;const cn=c.map(v=>v/m);
   const nn=Math.hypot(...cn)||1;em.push(TPL.map(t=>{let s=0;for(let k=0;k<12;k++)s+=t.v[k]*cn[k];return s/nn+t.b}).concat([q?1.2:0]))});
- const S=TPL.length+1,P=.12;let sc=em[0]?em[0].slice():[],bk=[];
+ const S=TPL.length+1,P=prof().pen;let sc=em[0]?em[0].slice():[],bk=[];
  for(let i=1;i<em.length;i++){let bi=0;for(let s=1;s<S;s++)if(sc[s]>sc[bi])bi=s;const ns=[],nb=[];for(let s=0;s<S;s++){const sw=sc[bi]-P;if(sc[s]>=sw){ns.push(sc[s]+em[i][s]);nb.push(s)}else{ns.push(sw+em[i][s]);nb.push(bi)}}sc=ns;bk.push(nb)}
  const path=new Array(em.length);if(em.length){let s=0;for(let k=1;k<S;k++)if(sc[k]>sc[s])s=k;for(let i=em.length-1;i>=0;i--){path[i]=s;if(i>0)s=bk[i-1][s]}}
  const cnt=new Float32Array(TPL.length);path.forEach(s=>{if(s<TPL.length)cnt[s]++});
@@ -134,6 +164,8 @@ function analyse(){
   if(mj>kb){kb=mj;key={r,mi:false}}if(mn>kb){kb=mn;key={r:(r+9)%12,mi:true}}}
  let b0=path.findIndex(s=>s<TPL.length);if(b0<0)b0=0;
  let last=path.length-1;while(last>b0&&path[last]==TPL.length)last--;
+ // Cauda: um compasso final com até meia barra só repetindo o acorde anterior é o som morrendo, não um compasso novo
+ const rem=(last-b0+1)%st.bpb;if(rem>0&&rem<=st.bpb/2&&last-rem>=b0&&path.slice(last-rem+1,last+1).every(s=>s==path[last-rem]))last-=rem;
  const bt=i=>i<beats.length?beats[i]/FPS:(beats[beats.length-1]+(i-beats.length+1)*per)/FPS;
  const bars=[];for(let i=b0;i<=last;i+=st.bpb){const ch=[];for(let k=0;k<st.bpb;k++){const s=path[i+k];if(s===undefined)break;const prevS=k==0?-1:path[i+k-1];if(s<TPL.length&&(k==0||s!=prevS))ch.push({pos:k,t:TPL[s]});else if(s==TPL.length&&k==0)ch.push({pos:0,t:null})}bars.push({t0:bt(i),t1:bt(i+st.bpb),ch,notes:[]})}
  const beatPos=f=>{let lo=0,hi=beats.length-1;if(f<=beats[0])return(f-beats[0])/per;if(f>=beats[hi])return hi+(f-beats[hi])/per;while(hi-lo>1){const m=(lo+hi)>>1;if(beats[m]<=f)lo=m;else hi=m}return lo+(f-beats[lo])/(beats[hi]-beats[lo])};
@@ -151,35 +183,43 @@ const chName=(t,fl)=>t?nm(t.r,fl)+Q[t.qi].s:'—';
 function render(){
  const A=st.A;if(!A)return;const fl=flatKey(A.key);
  $('kKey').textContent=nm(A.key.r,fl)+(A.key.mi?' menor':' maior');$('kBpm').textContent=A.bpm+' bpm';$('kBars').textContent=A.bars.length;$('kTr').textContent=(st.tr>0?'+':'')+st.tr;
- const box=$('score'),W=Math.max(300,box.clientWidth),per=W<560?2:4,G=8,H=150,top=64,bot=top+4*G;
+ const I=prof(),box=$('score'),W=Math.max(300,box.clientWidth),per=W<560?2:4,G=8,top=64;
+ // Pautas do sistema: violão = sol com 8; teclado = sol (cifra) ou sol + fá (melodia). b = passo diatônico da linha de baixo
+ const grand=I.clef=='grand'&&st.mode=='melodia';
+ const SV=grand?[{y:top,c:'g',b:30},{y:top+4*G+48,c:'f',b:18}]:[{y:top,c:I.clef=='g8'?'g8':'g',b:30}];
+ const last=SV[SV.length-1].y+4*G,H=last+54;
  const sys=[];for(let i=0;i<A.bars.length;i+=per)sys.push(A.bars.slice(i,i+per));
  const midY=top+2*G;let out='';
  sys.forEach((bs,si)=>{const lm=si==0?70:44,bw=(W-lm)/per;let g=`<g transform="translate(0,${si*H})">`;
-  bs.forEach((b,k)=>{const bi=si*per+k;g+=`<rect class="hl" data-b="${bi}" x="${lm+k*bw}" y="${top-46}" width="${bw}" height="${4*G+86}" rx="6"/>`});
-  for(let l=0;l<5;l++)g+=`<line x1="0" x2="${lm+bs.length*bw}" y1="${top+l*G}" y2="${top+l*G}" stroke="currentColor" stroke-width="1"/>`;
-  g+=`<text x="4" y="${bot-G}" font-family="'Noto Music'" font-size="${4*G}">𝄞</text><text x="12" y="${bot+22}" font-size="10" font-weight="600">8</text>`;
-  if(si==0)g+=`<text x="40" y="${top+2*G-2}" font-family="Archivo" font-weight="800" font-size="19">${st.bpb}</text><text x="40" y="${bot-2}" font-family="Archivo" font-weight="800" font-size="19">4</text>`;
+  bs.forEach((b,k)=>{const bi=si*per+k;g+=`<rect class="hl" data-b="${bi}" x="${lm+k*bw}" y="${top-46}" width="${bw}" height="${last-top+86}" rx="6"/>`});
+  SV.forEach(s=>{const bot=s.y+4*G;
+   for(let l=0;l<5;l++)g+=`<line x1="0" x2="${lm+bs.length*bw}" y1="${s.y+l*G}" y2="${s.y+l*G}" stroke="currentColor" stroke-width="1"/>`;
+   if(s.c=='f')g+=`<text x="4" y="${s.y+G}" font-family="'Noto Music'" font-size="${4*G}">𝄢</text>`;
+   else g+=`<text x="4" y="${bot-G}" font-family="'Noto Music'" font-size="${4*G}">𝄞</text>`+(s.c=='g8'?`<text x="12" y="${bot+22}" font-size="10" font-weight="600">8</text>`:'');
+   if(si==0)g+=`<text x="40" y="${s.y+2*G-2}" font-family="Archivo" font-weight="800" font-size="19">${st.bpb}</text><text x="40" y="${bot-2}" font-family="Archivo" font-weight="800" font-size="19">4</text>`});
+  if(grand)g+=`<line x1="0" x2="0" y1="${top}" y2="${last}" stroke="currentColor" stroke-width="2"/>`;
   g+=`<text x="${lm}" y="${top-34}" font-size="11" fill="var(--mute)">${si*per+1}</text>`;
   bs.forEach((b,k)=>{const x0=lm+k*bw,pad=16,step=(bw-pad*1.5)/st.bpb,X=pos=>x0+pad+pos*step;
-   g+=`<line x1="${x0+bw}" x2="${x0+bw}" y1="${top}" y2="${bot}" stroke="currentColor" stroke-width="${si==sys.length-1&&k==bs.length-1?3:1.2}"/>`;
+   g+=`<line x1="${x0+bw}" x2="${x0+bw}" y1="${top}" y2="${last}" stroke="currentColor" stroke-width="${si==sys.length-1&&k==bs.length-1?3:1.2}"/>`;
    b.ch.forEach(c=>{g+=`<text x="${X(c.pos)-4}" y="${top-14}" font-family="Archivo" font-weight="800" font-size="17">${chName(c.t,fl)}</text>`});
    if(st.mode=='cifra'){for(let p=0;p<st.bpb;p++){const x=X(p)+2;g+=`<line x1="${x-5}" y1="${midY+6}" x2="${x+5}" y2="${midY-6}" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>`}}
-   else b.notes.forEach(nt=>{g+=note(X(nt.pos)+4,nt,fl,top,G)})});
+   else b.notes.forEach(nt=>{const s=grand&&nt.m+st.tr+I.tr<60?SV[1]:SV[0];g+=note(X(nt.pos)+4,nt,fl,s.y,G,s.b,I.tr)})});
   out+=g+'</g>'});
  box.innerHTML=`<svg viewBox="0 0 ${W} ${sys.length*H+10}" height="${sys.length*H+10}" style="color:var(--ink)" role="img" aria-label="Partitura com ${A.bars.length} compassos">${out||'<text x="0" y="40">Nada reconhecido.</text>'}</svg>`;
  if(st.mode=='melodia'&&!A.bars.some(b=>b.notes.length))$('msg').textContent='Nenhuma nota isolada encontrada. O modo Melodia é para notas tocadas uma de cada vez.'}
 
-function note(x,nt,fl,top,G){
- const m=nt.m+st.tr+12,pc=((m%12)+12)%12,oc=Math.floor(m/12)-1;
+// base = passo diatônico da linha de baixo da pauta (sol: E4 = 30; fá: G2 = 18); tr = semitons para escrever
+function note(x,nt,fl,top,G,base=30,tr=12){
+ const m=nt.m+st.tr+tr,pc=((m%12)+12)%12,oc=Math.floor(m/12)-1;
  const L=fl?[0,1,1,2,2,3,4,4,5,5,6,6]:[0,0,1,1,2,3,3,4,4,5,5,6],acc=[1,3,6,8,10].includes(pc)?(fl?'♭':'♯'):'';
- const s=oc*7+L[pc],bot=top+4*G,y=bot-(s-30)*G/2;let g='';
- for(let k=28;k>=s;k-=2)g+=`<line x1="${x-9}" x2="${x+9}" y1="${bot-(k-30)*G/2}" y2="${bot-(k-30)*G/2}" stroke="currentColor"/>`;
- for(let k=40;k<=s;k+=2)g+=`<line x1="${x-9}" x2="${x+9}" y1="${bot-(k-30)*G/2}" y2="${bot-(k-30)*G/2}" stroke="currentColor"/>`;
+ const s=oc*7+L[pc],bot=top+4*G,y=bot-(s-base)*G/2;let g='';
+ for(let k=base-2;k>=s;k-=2)g+=`<line x1="${x-9}" x2="${x+9}" y1="${bot-(k-base)*G/2}" y2="${bot-(k-base)*G/2}" stroke="currentColor"/>`;
+ for(let k=base+10;k<=s;k+=2)g+=`<line x1="${x-9}" x2="${x+9}" y1="${bot-(k-base)*G/2}" y2="${bot-(k-base)*G/2}" stroke="currentColor"/>`;
  const d=nt.dur,open=d>=2;
  g+=`<ellipse cx="${x}" cy="${y}" rx="5.4" ry="3.9" transform="rotate(-20 ${x} ${y})" fill="${open?'none':'currentColor'}" stroke="currentColor" stroke-width="${open?1.6:1}"/>`;
  if(acc)g+=`<text x="${x-17}" y="${y+5}" font-size="15">${acc}</text>`;
  if(d==3||d==1.5)g+=`<circle cx="${x+10}" cy="${y-2}" r="1.7" fill="currentColor"/>`;
- if(d<4){const up=s<34,sx=up?x+5:x-5,ey=up?y-28:y+28;g+=`<line x1="${sx}" x2="${sx}" y1="${y}" y2="${ey}" stroke="currentColor" stroke-width="1.3"/>`;
+ if(d<4){const up=s<base+4,sx=up?x+5:x-5,ey=up?y-28:y+28;g+=`<line x1="${sx}" x2="${sx}" y1="${y}" y2="${ey}" stroke="currentColor" stroke-width="1.3"/>`;
   if(d<1)g+=`<path d="M${sx} ${ey} q8 ${up?8:-8} 6 ${up?18:-18}" fill="none" stroke="currentColor" stroke-width="1.8"/>`}
  return g}
 
@@ -208,24 +248,51 @@ async function recStop(){if(!R.on)return;R.on=false;clearInterval(R.iv);R.ms.get
  $('rec').textContent='● Gravar';$('rec').classList.remove('on');$('live').hidden=true;
  if(R.len<R.rate*2){$('msg').textContent='Gravação curta demais. Toque pelo menos alguns compassos.';return}
  const all=new Float32Array(R.len);let o=0;for(const c of R.chunks){all.set(c,o);o+=c.length}
- $('ttl').textContent='Gravação de '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});$('sub').textContent='gravado pelo microfone · violão soa uma oitava abaixo do escrito';
+ $('ttl').textContent='Gravação de '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});st.demo=false;setSub('gravado pelo microfone · ');
  try{const b=new AudioBuffer({length:all.length,sampleRate:R.rate,numberOfChannels:1});b.copyToChannel(all,0);const oc=new OfflineAudioContext(1,Math.ceil(b.duration*SR),SR),s=oc.createBufferSource();s.buffer=b;s.connect(oc.destination);s.start();run((await oc.startRendering()).getChannelData(0))}catch(e){run(rs(all,R.rate))}
  R.ctx.close()}
 async function load(file){
  stop();$('msg').textContent='Lendo o áudio…';
  try{const ab=await file.arrayBuffer();const dec=await new OfflineAudioContext(1,1,SR).decodeAudioData(ab);
   const dur=Math.min(dec.duration,240);const oc=new OfflineAudioContext(1,Math.ceil(dur*SR),SR);const s=oc.createBufferSource();s.buffer=dec;s.connect(oc.destination);s.start();const r=await oc.startRendering();
-  $('ttl').textContent=file.name.replace(/\.[^.]+$/,'');$('sub').textContent=(dec.duration>240?'primeiros 4 minutos · ':'')+'violão soa uma oitava abaixo do escrito';
+  $('ttl').textContent=file.name.replace(/\.[^.]+$/,'');st.demo=false;setSub(dec.duration>240?'primeiros 4 minutos · ':'');
   run(r.getChannelData(0))}catch(e){$('msg').textContent='Não consegui ler esse arquivo. Tente MP3, M4A, WAV ou um vídeo MP4.'}}
 
 function run(x){st.buf=x;st.tr=0;st.lagMul=1;$('msg').textContent='Analisando…';$('play').disabled=false;
  setTimeout(()=>{let m=0;for(const v of x)m=Math.max(m,Math.abs(v));if(m>0&&m<.5){const g=.5/m;for(let i=0;i<x.length;i++)x[i]*=g}
   st.F=frames(x);analyse();$('msg').textContent='Pronto. Confira ouvindo: o compasso que está tocando fica destacado.'},30)}
 
-function demo(){const bpm=96,b=60/bpm,prog=[[48,52,55,60,64],[45,52,57,60,64],[41,48,53,57,60,65],[43,47,50,55,59,67]],bars=8;
+const subNote=()=>prof().clef=='g8'?'violão soa uma oitava abaixo do escrito':prof().n.toLowerCase()+' · teclado soa como está escrito';
+function setSub(pre){st.pre=pre;$('sub').textContent=pre+subNote()}
+
+// Demo: C – Am – F – G, 96 bpm, no timbre escolhido
+function demo(){const I=st.ins,bpm=96,b=60/bpm,bars=8;
  const x=new Float32Array(Math.ceil((bars*4*b+1.5)*SR)),st0=Math.round(.15*SR);
- for(let i=0;i<bars;i++){const v=prog[i%4];for(let k=0;k<4;k++){const t0=st0+Math.round((i*4+k)*b*SR),dn=k%2==0,ns=dn?v:[...v].reverse().slice(0,4);ns.forEach((m,j)=>pluck(x,t0+j*Math.round(.012*SR),m,Math.round(b*SR*1.05),dn?.25:.14))}}
+ if(I=='violao'){const prog=[[48,52,55,60,64],[45,52,57,60,64],[41,48,53,57,60,65],[43,47,50,55,59,67]];
+  for(let i=0;i<bars;i++){const v=prog[i%4];for(let k=0;k<4;k++){const t0=st0+Math.round((i*4+k)*b*SR),dn=k%2==0,ns=dn?v:[...v].reverse().slice(0,4);ns.forEach((m,j)=>pluck(x,t0+j*Math.round(.012*SR),m,Math.round(b*SR*1.05),dn?.25:.14))}}}
+ else{const prog=[[36,48,60,64,67],[33,45,60,64,69],[29,41,60,65,69],[31,43,59,62,67]],B=Math.round(b*SR);
+  for(let i=0;i<bars;i++){const v=prog[i%4],t=k=>st0+Math.round((i*4+k)*b*SR);
+   if(I=='piano'){v.slice(0,2).forEach(m=>{kb(x,t(0),m,2*B,.2,I);kb(x,t(2),m,2*B,.16,I)});for(let k=0;k<4;k++)v.slice(2).forEach(m=>kb(x,t(k),m,B,k%2?.1:.14,I))}
+   else if(I=='orgao'){for(const k of[0,2])v.forEach(m=>kb(x,t(k),m,2*B-Math.round(.06*SR),.08,I))}
+   else v.forEach(m=>kb(x,t(0),m,4*B,.08,I))}}
+ let mx=0;for(const v of x)mx=Math.max(mx,Math.abs(v));if(mx>0){const g=.5/mx;for(let i=0;i<x.length;i++)x[i]*=g}
  return x}
+// Síntese aditiva simples dos timbres de teclado. H: amplitude por harmônico; a/r: ataque/soltura (s); dec: decaimento (piano); v: vozes desafinadas (chorus)
+const TB={piano:{H:[1,.5,.3,.2,.12,.08,.05,.03],a:.004,r:.08,dec:1,v:[0]},
+ orgao:{H:[1,.7,.5,.4,0,.2,0,.2],a:.015,r:.04,dec:0,v:[0]},
+ strings:{H:[1,.5,.33,.25,.2,.17,.14,.12],a:.25,r:.3,dec:0,v:[-.004,.005],vib:.003},
+ pad:{H:[1,.33,.17,.1,.06,.04],a:.6,r:.8,dec:0,v:[-.006,.006]}};
+// Wavetable: um ciclo da onda pré-calculado e lido em loop (muito mais rápido que somar senos por amostra).
+// Piano: harmônicos 1–2 e 3+ em tabelas separadas, com decaimentos diferentes (agudos somem antes).
+function kb(x,t0,m,dur,amp,tim){const T=TB[tim],f=440*2**((m-69)/12),Z=2048,A=T.a*SR,Rl=T.r*SR,end=Math.min(x.length,t0+dur+Rl);
+ const mk=(h0,h1)=>{const w=new Float32Array(Z);for(let h=h0;h<=Math.min(h1,T.H.length);h++){if(!T.H[h-1]||f*h>9000)continue;for(let i=0;i<Z;i++)w[i]+=T.H[h-1]*Math.sin(2*Math.PI*h*i/Z)}return w};
+ const wa=mk(1,T.dec?2:99),wb=T.dec?mk(3,99):null,da=T.dec?Math.exp(-1.55/SR):1,db=Math.exp(-2.8/SR);let ga=1,gb=1;
+ const ph=T.v.map(()=>Math.random()),inc=T.v.map(d=>f*(1+d)/SR),nv=T.v.length;
+ for(let i=0;t0+i<end;i++){let env=Math.min(1,i/A);if(i>dur)env*=Math.max(0,1-(i-dur)/Rl);
+  const vb=T.vib?1+T.vib*Math.sin(2*Math.PI*5.5*i/SR)*Math.min(1,i/(.4*SR)):1;let s=0;
+  for(let vi=0;vi<nv;vi++){let p=ph[vi]+inc[vi]*vb;p-=Math.floor(p);ph[vi]=p;const k=(p*Z)|0;s+=wa[k]*ga+(wb?wb[k]*gb:0)}
+  ga*=da;gb*=db;x[t0+i]+=amp*env*s/nv}}
+function showDemo(){$('ttl').textContent='Exemplo: C – Am – F – G'+(st.ins=='violao'?'':' · '+prof().n);st.demo=true;setSub('gravação de demonstração gerada aqui mesmo · ');run(demo())}
 function pluck(x,t0,m,dur,amp){const L=Math.round(SR/(440*2**((m-69)/12))),d=new Float32Array(L);for(let i=0;i<L;i++)d[i]=Math.random()*2-1;let p=0;for(let i=0;i<dur&&t0+i<x.length;i++){const q=(p+1)%L,v=d[p];d[p]=.4985*(d[p]+d[q]);x[t0+i]+=v*amp*(i>dur-220?(dur-i)/220:1);p=q}}
 
 function stop(){if(st.src){try{st.src.stop()}catch(e){}st.src=null}cancelAnimationFrame(st.raf);$('play').textContent='▶ Ouvir';document.querySelectorAll('.hl.on').forEach(r=>r.classList.remove('on'))}
@@ -245,6 +312,15 @@ $('m4').addEventListener('click',()=>setM(4));$('m3').addEventListener('click',(
 $('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(cifraTxt());$('msg').textContent='Cifra copiada.'}catch(e){$('msg').textContent=cifraTxt()}});
 const ro=new ResizeObserver(()=>render());ro.observe($('score'));
 document.fonts&&document.fonts.ready.then(render);
-run(demo());
+// Troca de instrumento: refaz a demo, ou reanalisa a gravação atual com o novo perfil. A escolha fica salva no aparelho.
+function setIns(k){if(!okIns(k))return;st.ins=k;if(k!='violao')st.lastKb=k;try{localStorage.setItem('partitura.ins',k)}catch(e){}
+ const kbd=k!='violao';$('iV').setAttribute('aria-pressed',!kbd);$('iT').setAttribute('aria-pressed',kbd);$('tim').hidden=!kbd;
+ document.querySelectorAll('#tim button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t==k));
+ if(!st.buf)return;if(st.demo){showDemo();return}
+ stop();setSub(st.pre);$('msg').textContent='Analisando…';setTimeout(()=>{st.F=frames(st.buf);analyse();$('msg').textContent='Pronto. Reanalisado como '+prof().n+'.'},30)}
+$('iV').addEventListener('click',()=>setIns('violao'));$('iT').addEventListener('click',()=>setIns(st.lastKb));
+document.querySelectorAll('#tim button').forEach(b=>b.addEventListener('click',()=>setIns(b.dataset.t)));
+if(st.ins!='violao')st.lastKb=st.ins;
+setIns(st.ins);showDemo();
 }
 </script></body></html>

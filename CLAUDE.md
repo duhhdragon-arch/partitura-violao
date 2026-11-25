@@ -1,7 +1,7 @@
 # CLAUDE.md: Violão para partitura
 
 ## O que é
-App web que escuta violão (microfone ao vivo ou arquivo de áudio/vídeo) e escreve a **cifra numa pauta**: andamento (bpm), tom, compassos e acordes. Tem um modo **Melodia** para notas tocadas uma de cada vez. Feito a pedido do meu tio, que quer tocar e já ver a partitura/cifra montada.
+App web que escuta **violão ou teclado** (microfone ao vivo ou arquivo de áudio/vídeo) e escreve a **cifra numa pauta**: andamento (bpm), tom, compassos e acordes. Tem um modo **Melodia** para notas tocadas uma de cada vez. Feito a pedido do meu tio, que quer tocar e já ver a partitura/cifra montada. Teclado (piano, órgão, strings, pad) adicionado em 25/11/2026 a pedido dele: são os timbres que ele mais usa.
 
 - Repositório: `duhhdragon-arch/partitura-violao` (público)
 - Site (GitHub Pages, branch `main`, pasta raiz): https://duhhdragon-arch.github.io/partitura-violao/
@@ -26,6 +26,7 @@ npx serve .        # ou: python3 -m http.server 8000
 Abrir `http://localhost:8000`. No celular, testar pelo site do GitHub Pages (https).
 
 ## Funcionalidades
+- **Instrumento**: Violão | Teclado (timbres Piano, Órgão, Strings, Pad). A escolha fica em `localStorage` (`partitura.ins`), validada contra a lista `INS` antes de usar. Trocar de instrumento refaz a demo, ou reanalisa a gravação atual com o novo perfil.
 - **● Gravar / ■ Parar**: microfone ao vivo. Enquanto grava, mostra o acorde atual grande e o histórico. Ao parar, analisa a gravação inteira e monta a partitura. Limite: 4 min.
 - **Enviar gravação**: aceita `audio/*` e `video/*` (MP3, M4A, WAV, MP4…). Analisa os primeiros 4 min.
 - **▶ Ouvir**: toca o áudio e destaca o compasso atual na pauta.
@@ -34,8 +35,22 @@ Abrir `http://localhost:8000`. No celular, testar pelo site do GitHub Pages (htt
 - **½× / 2×**: corrige o andamento quando a detecção sai pela metade ou pelo dobro.
 - **4/4 / 3/4**: fórmula de compasso.
 - **Copiar cifra**: texto no formato `| C | Am | F | G |` com tom, bpm e compasso.
-- Ao abrir, carrega uma **demo sintetizada** (C – Am – F – G, 96 bpm, violão Karplus-Strong).
+- Ao abrir, carrega uma **demo sintetizada** (C – Am – F – G, 96 bpm) no timbre escolhido: violão por Karplus-Strong; teclado por síntese aditiva com wavetable (`TB`/`kb()`): piano com decaimento, órgão sustentado em drawbars, strings com 2 vozes + vibrato, pad com ataque lento de 0,6 s.
 - Tema claro/escuro automático (`light-dark()`), layout responsivo (2 compassos por linha abaixo de 560px).
+
+## Perfis de instrumento (`INS`, lido por `prof()`)
+| Perfil | Pauta | `tr` (escrita) | Pitch MIDI | `wC` | `pen` (Viterbi) |
+|---|---|---|---|---|---|
+| violao | sol com 8 | +12 | 40–88 | 0 | 0,12 |
+| piano | sol (cifra) / sol + fá (melodia) | 0 | 36–96 | 0,4 | 0,12 |
+| orgao | idem | 0 | 36–96 | 1,2 | 0,15 |
+| strings | idem | 0 | 36–96 | 2 | 0,18 |
+| pad | idem | 0 | 36–96 | 2 | 0,18 |
+
+- `wC` > 0: o envelope de ritmo soma a **novidade harmônica** (distância de cosseno entre o chroma de 4 frames antes e 4 depois, ponderada pelo volume). Assim timbres sem ataque (pad, strings, órgão) ainda marcam o pulso pelas trocas de acorde. Com `wC` > 0 a autocorrelação vira "pente": `r(l) + 0,5·r(2l) + 0,5·r(bpb·l)`, para achar a batida mesmo quando só o compasso tem troca.
+- `wC` ≥ 1: no acorde por batida, ignora os primeiros 40% da batida, porque o acorde novo ainda está crescendo.
+- Pauta dupla: nota com MIDI escrito < 60 vai para a clave de fá. `note()` recebe `base` (passo da linha de baixo: sol 30, fá 18) e `tr`.
+- Valores de `wC`/`pen` foram ajustados só com as demos sintetizadas. Precisam de gravação real.
 
 ## Pipeline de análise (tudo no navegador, Web Audio)
 Constantes: `SR = 22050` Hz, `N = 4096` (FFT), `HOP = 512` (~23 ms, `FPS ≈ 43`).
@@ -53,7 +68,7 @@ Constantes: `SR = 22050` Hz, `N = 4096` (FFT), `HOP = 512` (~23 ms, `FPS ≈ 43`
 4. **Acordes por batida**: chroma médio por batida, similaridade de cosseno com 48 moldes (12 tônicas × maior, menor, 7, m7). Os moldes incluem harmônicos (offsets `[0,0,7,0,4]`, decaimento 0,6^h). Sem isso, C era confundido com Em7. Sétimas têm viés −0,04 para preferir tríades. Batida com rms < 6% do máximo é silêncio.
 5. **Suavização (Viterbi)**: penalidade 0,12 para trocar de acorde, evitando acordes "piscando".
 6. **Tom**: pontua os 24 tons pelos acordes diatônicos encontrados (I, ii, iii, IV, V, vi), com bônus para tônica e dominante. Tons de bemol (F, Bb, Eb, Ab, Db, Gb, Dm, Gm, Cm, Fm…) escrevem acordes com ♭.
-7. **Compassos**: começam na primeira batida com acorde (ignora silêncio inicial) e vão até a última.
+7. **Compassos**: começam na primeira batida com acorde (ignora silêncio inicial) e vão até a última. Um compasso final com até meia barra repetindo o acorde anterior é descartado (é a cauda do som).
 8. **Melodia**: notas segmentadas pelos ataques (picos de flux > 1,6× a média local). Cada segmento usa o pitch mais frequente (moda) e é quantizado a colcheias no grid de batidas.
 9. **Ao vivo (`liveTick`, a cada 350 ms)**: analisa os últimos 0,6 s e só troca o acorde exibido depois de 2 leituras iguais seguidas.
 
@@ -71,11 +86,14 @@ Testado em Node com stubs de DOM:
 - Demo C–Am–F–G: cifra, tom C maior e 96 bpm corretos. Transposição −2 → Bb–Gm–Eb–F.
 - Melodia sintetizada de 15 notas: alturas certas. Perde a 1ª nota e cria uma extra no fim (bordas).
 - Microfone simulado a 48 kHz: acorde ao vivo funcionando. Na transição entre acordes pode mostrar um intermediário (ex.: Am7).
-- **Ainda não testado com gravação real de violão.**
+- Teclado (25/11/2026): demos de piano, órgão, strings e pad, todas com C–Am–F–G, tom C maior, 96 bpm e 8 compassos. Antes do corte de cauda e do pulo de 40%, pad dava "F G" no 4º compasso e um compasso extra no fim. Tempo no Node: demo < 0,4 s, análise ~0,3 s. **No teste, carregar o script com `(0,eval)(js)` (eval indireto). Com `eval` direto o V8 não otimiza e tudo fica ~10× mais lento.**
+- Pauta dupla conferida com screenshot no Chrome headless.
+- Violão: o tio já testou e gostou. **Teclado ainda não testado com gravação real.**
 
 ## Limitações conhecidas
 - Acordes com 9ª, sus, dim, aum e baixo trocado (C/E) saem simplificados.
-- Melodia só com notas isoladas (sem acompanhamento junto).
+- Melodia só com notas isoladas (sem acompanhamento junto). No piano com as duas mãos, a melodia sai com a nota mais forte, em geral o baixo. Solução futura: Basic Pitch (Spotify, roda no navegador via TF.js).
+- Pad/strings: o andamento depende das trocas de acorde. Música com acorde parado por muitos compassos fica sem pulso confiável. Ideia: botão de tap tempo.
 - Alto-falante de celular perde o grave e o baixo do acorde pode sair errado. Caixinha de som ajuda.
 - Compassos ainda não detectam anacruse (a música começa sempre no tempo 1).
 - `ScriptProcessorNode` é obsoleto. Migrar para `AudioWorklet`.
