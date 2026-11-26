@@ -90,6 +90,15 @@ Pedido do tio: no modo Melodia o app "acertava umas notas e inventava outras", e
 
   Com som sintético limpo até o método antigo acerta ~90%; no áudio real do tio ele era bem pior. **Falta o teste com gravação real.**
 
+## Looper (26/11/2026, pedido do tio)
+Para **treino**, sem partitura. Botão `🔁 Looper` abre o `<dialog id="lp">`. Escolhe 1/2/4/8 compassos (andamento = `st.cnt.bpm`, compasso = `st.bpb`; travados enquanto houver camada). "Gravar loop" conta 1 compasso e grava exatamente N compassos (`LP.len` em amostras); o loop começa a tocar sozinho, em fase. "Gravar camada" grava a próxima volta inteira por cima (parado: conta 1 compasso antes). Desfazer, mudo por camada (chips), Apagar tudo (pede confirmação), Clique liga/desliga. Fechar **desliga o microfone e fecha o contexto** (`lpClose`); as camadas ficam na memória até recarregar a página.
+- **Relógio**: `AudioWorklet` (código em `LPW`, carregado por Blob URL) manda blocos de 2048 amostras carimbados com `currentFrame`. Som que sai no quadro f volta ao microfone em f+L. Quem toca, toca no que ouve; então a camada da volta que começou em T é `[T+L, T+L+volta)`. Guarda o trecho bruto com margem de 0,25 s (`raw`, `off0`) para **realinhar na hora** quando L muda (−5/+5 ms ou nova medição).
+- **Emenda**: fade-in de 5 ms e os 0,3 s depois do fim (nota ainda soando) somados no começo com fade, como num pedal de loop. Cada camada é normalizada (pico 0,7, ganho máx. 6×); mix = 0,9/√(camadas ativas). Todas as camadas têm o mesmo comprimento em amostras e partem de `lpPhase`, então nunca saem de fase.
+- **Atraso (L)**: "Medir atraso" toca 8 cliques de 2637 Hz, acha o início de cada um no microfone (demodulação I/Q, janela 2 ms, metade do pico) e desconta o viés do detector medido num clique sintético. Exige 5 de 8 leituras a até 4 ms da mediana. Salvo em `localStorage` `partitura.lat` (`{ms, src:'medido'|'ajustado'}`, validado 0–600). Sem medição, usa a estimativa do navegador. **Bluetooth** (o teclado do tio): medir de novo ao trocar de saída de som.
+- **Clique vazado**: um notch estreito tirava só ~7 dB (o clique é curto e se espalha). `lpTiraClique` usa notch largo (Q 3, duas passadas, ~−35 dB) **só de −30 a +110 ms em volta de cada clique** (o app sabe quando cada um tocou). Resultado no teste: clique 25 dB abaixo da nota (antes, −2 dB).
+- **Teste** (`testes/teste7.js`, Chrome mudo, microfone simulado por `LP.fakeIn` com atraso de ida e volta conhecido): com 137 ms e 280 ms, calibração exata, loop e camada 2 com **0 ms de erro** em todas as notas, +50 ms de ajuste move a camada −50 ms, mudo/desfazer/apagar/fechar ok, microfone desligado ao fechar. **Falta testar com o teclado Bluetooth de verdade.**
+- Limitação: com caixa de som (não fone), o loop também vaza no microfone e entra na camada nova, **alinhado** (só fica mais alto/colorido). Fone com fio evita.
+
 ## Offline (`sw.js`)
 - O registro só acontece em contexto seguro (HTTPS ou localhost).
 - Página: **rede primeiro**, com limite de 4 s e cópia em cache como reserva. Por isso não é preciso mudar `CACHE` a cada atualização do `index.html`.
@@ -181,7 +190,8 @@ Rodar da pasta do projeto. Todos carregam o `<script>` do `index.html` com `(0,e
 - `node testes/teste4.js index.html [violao,piano,orgao,strings,pad]`: andamento variável (precisa dar 600/600).
 - `node testes/teste5.js index.html` e depois `node index.html.tmp.js index.html` (apagar o .tmp.js depois): metrônomo vazando no microfone. Para testar latência, no .tmp.js somar `LAT` ao `lead` dos acordes e dos cliques e pôr `lat:EST` no `st.grid`.
 - `node testes/teste6.js <pasta que contém partitura-violao/> <porta>`: Melodia, método antigo × IA (precisa de WebGL, então Chrome headless; não roda no Node). `DET=1` mostra caso a caso. Copiar `index.html`, `sw.js` e `bp/` para a pasta de teste e lembrar que o service worker guarda o `bp/` em cache: ao mudar `bp/`, usar perfil novo do Chrome ou trocar `CACHE`.
-- Chrome headless para os testes: `chrome --headless=new --remote-debugging-port=9333 --user-data-dir=<perfil> --use-fake-ui-for-media-stream --use-fake-device-for-media-stream --autoplay-policy=no-user-gesture-required`.
+- `node testes/teste7.js <pasta que contém partitura-violao/> <porta> [atraso ms]`: looper (calibração, alinhamento, clique vazado).
+- Chrome headless para os testes: **sempre com `--mute-audio`** (sem isso o som de teste sai no fone/caixa do Eduardo; aconteceu em 26/11/2026). `chrome --headless=new --mute-audio --remote-debugging-port=9333 --user-data-dir=<perfil> --use-fake-ui-for-media-stream --use-fake-device-for-media-stream --autoplay-policy=no-user-gesture-required`.
 - `cdp.js` (offline/service worker), `cdp2.js` (quadro de acordes e afinador), `cdp3.js` (metrônomo): precisam de um Chrome headless com `--remote-debugging-port` e microfone falso (`--use-fake-ui-for-media-stream --use-fake-device-for-media-stream`). Uso: `node testes/cdp3.js <pasta que contém partitura-violao/> <pasta das capturas> <porta>`.
 
 ## Histórico (feedback do tio e versões)
@@ -204,6 +214,7 @@ Tudo em 25/11/2026.
   - Rodapé com crédito/licença; textos "O que funciona bem" e "Onde ainda erra" com a Melodia com IA.
   - Teste novo `testes/teste6.js`.
 - **Textos da página revisados (26/11/2026)**: título, marca, `<h1>`, `manifest.json` e README com teclado primeiro; frase do topo cita a Melodia; título/subtítulo iniciais da folha já no piano; "Andamento e tom", "Onde ainda erra" e "Dica de gravação" atualizados (contagem, metrônomo, fone com fio). Testes depois disso: `teste2` igual, `teste4` 600/600, `teste6` igual à tabela da Melodia. Publicado junto com a Melodia com IA.
+- **Feedback do tio (26/11/2026, tarde, antes de testar a Melodia)**: gostou bastante de gravar. Pediu (1) **gravar uma 2ª pista por cima da 1ª** (ele já sofre com latência nisso em outros apps) e (2) **looping**: gravar alguns compassos e o app ficar repetindo. Ele respondeu que o **looping é para treino** (não precisa gerar partitura). O teclado novo dele tem **Bluetooth**: o som do celular sai nas caixas do teclado. **Feito (ver "Looper")**, commitado localmente, sem publicar até o retorno do teste da Melodia.
 - Próximo passo com o tio: testar a Melodia no piano com gravação real (melodia com acorde no fim, as duas mãos) e mandar retorno. Se escorregar, pedir a gravação.
 
 ## Limitações conhecidas
