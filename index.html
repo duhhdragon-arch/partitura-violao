@@ -163,7 +163,7 @@ dialog form{display:grid;gap:8px}
 <p class="lede">Escolha o instrumento, toque perto do microfone ou envie uma gravação (do celular serve, até em vídeo). A página descobre o andamento, o tom e os acordes, e escreve a cifra numa pauta.</p>
 <div class="panel">
  <div class="row">
-  <div class="g"><span class="lbl">Instrumento</span><div class="seg acc" role="group" aria-label="Instrumento"><button id="iV" aria-pressed="true">Violão</button><button id="iT" aria-pressed="false">Teclado</button></div></div>
+  <div class="g"><span class="lbl">Instrumento</span><div class="seg acc" role="group" aria-label="Instrumento"><button id="iT" aria-pressed="true">Teclado</button><button id="iV" aria-pressed="false">Violão</button></div></div>
   <div class="g" id="tim" hidden><span class="lbl">Timbre</span><div class="seg" role="group" aria-label="Timbre do teclado"><button data-t="piano" aria-pressed="false">Piano</button><button data-t="orgao" aria-pressed="false">Órgão</button><button data-t="strings" aria-pressed="false">Strings</button><button data-t="pad" aria-pressed="false">Pad</button></div></div>
   <button id="tunBtn" class="push" title="Afinador pelo microfone">🎯 Afinador</button>
  </div>
@@ -222,15 +222,19 @@ dialog form{display:grid;gap:8px}
  <div class="acts"><button value="cancel" class="push" formnovalidate>Cancelar</button><button value="ok" class="pri">Abrir no Repertório</button></div>
 </form></dialog>
 <section class="band" style="padding-top:0"><div class="wrap cols">
-<div><h2>O que funciona bem</h2><p><span class="ok">Acordes e cifra.</span> O som é decomposto nas 12 notas da escala e comparado com moldes de acordes maiores, menores e com sétima, batida por batida.</p><p><span class="ok">Andamento e tom.</span> Os ataques das batidas marcam o pulso; o conjunto das notas indica o tom.</p><p><span class="ok">Teclado.</span> Piano, órgão, strings e pad. No modo Melodia o teclado usa pauta dupla: clave de sol para a mão direita, clave de fá para a esquerda.</p></div>
-<div><h2>Onde ainda erra</h2><p>Acordes com nona, suspensos ou com baixo trocado (C/E) saem simplificados. A melodia só funciona com uma nota por vez, sem acompanhamento. Se o andamento sair o dobro ou a metade, use ½× ou 2×.</p><p>Pad e strings entram devagar, sem ataque marcado: o andamento é deduzido pelas trocas de acorde. Confira ouvindo e corrija com ½× ou 2× se precisar.</p></div>
+<div><h2>O que funciona bem</h2><p><span class="ok">Acordes e cifra.</span> O som é decomposto nas 12 notas da escala e comparado com moldes de acordes maiores, menores e com sétima, batida por batida.</p><p><span class="ok">Andamento e tom.</span> Os ataques das batidas marcam o pulso; o conjunto das notas indica o tom.</p><p><span class="ok">Teclado.</span> Piano, órgão, strings e pad. No modo Melodia o teclado usa pauta dupla: clave de sol para a mão direita, clave de fá para a esquerda.</p><p><span class="ok">Melodia com IA.</span> Um leitor de notas treinado (Basic Pitch) pega várias notas ao mesmo tempo: a melodia, o baixo da mão esquerda e o acorde do fim da frase. Na primeira vez ele baixa uns 2 MB; depois funciona até sem internet. O áudio continua sem sair do aparelho.</p></div>
+<div><h2>Onde ainda erra</h2><p>Acordes com nona, suspensos ou com baixo trocado (C/E) saem simplificados. Na Melodia, nota rápida ou repetida pode sair meio tempo deslocada, e a partitura é simplificada (sem pausas nem ligaduras). Se o andamento sair o dobro ou a metade, use ½× ou 2×.</p><p>Pad e strings entram devagar, sem ataque marcado: o andamento é deduzido pelas trocas de acorde. Confira ouvindo e corrija com ½× ou 2× se precisar.</p></div>
 <div><h2>Dica de gravação</h2><p>Grave perto do instrumento, num lugar quieto. Celular tocando outro celular funciona, mas alto-falante pequeno perde o grave: uma caixinha de som ajuda. Toque em Gravar e comece tocando: silêncio longo no começo atrapalha achar o primeiro compasso. Arquivos de até 4 minutos.</p></div>
 </div></section>
-<footer class="band"><div class="wrap"><span>Tudo roda no seu navegador: o áudio não sai do aparelho.</span><a href="https://github.com/duhhdragon-arch/partitura-violao">código no GitHub</a></div></footer>
+<footer class="band"><div class="wrap"><span>Tudo roda no seu navegador: o áudio não sai do aparelho. Leitor de notas da Melodia: <a href="https://github.com/spotify/basic-pitch">Basic Pitch</a> (Spotify) com <a href="https://github.com/tensorflow/tfjs">TensorFlow.js</a> (Google), licença <a href="bp/LICENSE-basic-pitch.txt">Apache 2.0</a>.</span><a href="https://github.com/duhhdragon-arch/partitura-violao">código no GitHub</a></div></footer>
 <script>
 {
 const SR=22050,N=4096,HOP=512,FPS=SR/HOP;
 const PRE=.12; // segundos de áudio mantidos antes do fim da contagem (quem entra um pouco adiantado não perde o ataque)
+// O quadro i analisa o som de i*HOP até i*HOP+N. Como o volume é comprimido (log), o ataque de uma nota já aparece no
+// envelope de ataques quando ela entra na janela: o pico fica ATQ quadros (~150 ms) ANTES da hora real da nota.
+// Medido com violão, piano e órgão sintetizados. Serve para converter segundos <-> quadros de batida.
+const ATQ=6.5;
 const $=id=>document.getElementById(id);
 const SH=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FL=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
 const Q=[{s:'',iv:[0,4,7],b:0},{s:'m',iv:[0,3,7],b:0},{s:'7',iv:[0,4,7,10],b:-.04},{s:'m7',iv:[0,3,7,10],b:-.04}];
@@ -245,7 +249,7 @@ const INS={
  pad:{n:'Pad',clef:'grand',tr:0,lo:36,hi:96,wC:2,pen:.18}};
 let saved=null;try{saved=localStorage.getItem('partitura.ins')}catch(e){}
 const okIns=k=>Object.prototype.hasOwnProperty.call(INS,k);
-let st={mode:'cifra',tr:0,bpb:4,buf:null,F:null,A:null,lagMul:1,ctx:null,src:null,t0:0,raf:0,ins:okIns(saved)?saved:'violao',lastKb:'piano',demo:false,pre:''};
+let st={mode:'cifra',tr:0,bpb:4,buf:null,F:null,A:null,lagMul:1,ctx:null,src:null,t0:0,raf:0,ins:okIns(saved)?saved:'piano',BP:null,lastKb:'piano',demo:false,pre:''};
 const prof=()=>INS[st.ins];
 
 function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t}}
@@ -286,14 +290,35 @@ function beatsOf(F){
  // Gravou com contagem: o andamento de partida é conhecido, não precisa adivinhar
  if(st.grid)L=FPS*60/st.grid.bpm;
  L*=st.lagMul;L=Math.max(6,Math.min(L,FPS*2.4));
- const b=[];
- if(st.grid&&st.grid.met){
-  // Metrônomo ligado o tempo todo: o andamento não muda, então o rastreador fica preso a ele (Ellis 2007)
+ const b=[];let one=-1;
+ if(st.grid&&st.grid.met&&P.wC>=1){
+  // Metrônomo + pad/strings/órgão: o acorde novo demora a crescer, então vale alinhar as batidas onde a troca de acorde
+  // aparece (rastreador de Ellis 2007 com o período do metrônomo fixo), não no clique exato
   const cs=new Float32Array(n),bp=new Int32Array(n).fill(-1);
   for(let t=0;t<n;t++){let bv=-1e9,bi=-1;for(let p=Math.max(0,t-Math.round(2*L));p<=t-Math.round(L/2);p++){const v=cs[p]-400*Math.log((t-p)/L)**2;if(v>bv){bv=v;bi=p}}
    if(bi>=0&&bv>0){cs[t]=e[t]+bv;bp[t]=bi}else cs[t]=e[t]}
   let t=n-1,bv=-1;for(let i=Math.max(0,n-Math.round(L));i<n;i++)if(cs[i]>bv){bv=cs[i];t=i}
   while(t>=0){b.push(t);t=bp[t]}
+ }else if(st.grid&&st.grid.met){
+  // Metrônomo + piano/violão: as batidas SÃO os cliques, e o app sabe quando cada um tocou (o 1º depois da
+  // contagem fica PRE s depois do início da gravação). Falta só o atraso do som (alto-falante + microfone, ou fone
+  // Bluetooth). O navegador informa uma estimativa (grid.lat); procura ± 1/4 de tempo em volta dela e fica com o atraso
+  // que mais coincide com os ataques na grade de COLCHEIAS (tempo e contratempo quase com o mesmo peso). Comparar só
+  // com os tempos deixava uma melodia sincopada puxar a grade meio tempo. Em quadros, o clique de PRE s fica em
+  // PRE*FPS-ATQ (ver ATQ).
+  const c0=PRE*FPS-ATQ,spb=L/FPS,ctr=Math.min(.4,Math.max(0,st.grid.lat??.06)),w=Math.max(.04,Math.min(.15,spb/4-1/FPS));
+  const E=f=>{f=Math.round(f);return f<0||f>=n?0:Math.max(e[f],f>0?e[f-1]:0,f+1<n?e[f+1]:0)},k0=a=>-Math.floor((c0+a*FPS)/L);
+  let best=-1,off=ctr;
+  for(let a=ctr-w;a<=ctr+w+1e-9;a+=1/FPS){let sc=0;for(let k=k0(a);;k++){const f=c0+a*FPS+k*L;if(f>=n)break;sc+=1.25*E(f)+E(f+L/2)}if(sc>best){best=sc;off=a}}
+  // Salvaguarda para atraso mal informado (alguns fones Bluetooth): se a grade meio tempo ao lado tem ataque em quase
+  // todo tempo (80%+) e a escolhida em quase nenhum (20%-), a estimativa estava muito errada. Melodia sincopada não
+  // chega nisso (sempre tem nota nos dois lugares); batida de violão ou acorde fora do lugar chega.
+  const fr=a=>{let c=0,t=0;for(let k=k0(a);;k++){const f=c0+a*FPS+k*L;if(f>=n)break;t++;if(E(f)>=1)c++}return c/Math.max(1,t)},f0=fr(off);
+  if(f0<=.2)for(const alt of[off-spb/2,off+spb/2])if(alt>=-.05&&alt<=.5&&fr(alt)>=.8){off=alt;break}
+  // Tempo um pouquinho antes do início da gravação (atraso pequeno) fica no quadro 0, para o compasso 1 não pular um tempo
+  for(let k=k0(off)-1;;k++){const f=Math.round(c0+off*FPS+k*L);if(f>=n)break;if(f>=-L/2)b.push(Math.max(0,f))}
+  one=Math.max(0,Math.round(c0+off*FPS)); // quadro do 1º clique depois da contagem = tempo 1 do compasso 1
+  b.reverse();
  }else{
   // Sem metrônomo, quem toca acelera e desacelera. O estado é (quadro, intervalo da última batida): o intervalo pode mudar
   // aos poucos de uma batida para a outra (custo LAM por mudança) e paga pouco (MU) por se afastar do andamento inicial.
@@ -316,10 +341,10 @@ function beatsOf(F){
  const per=b.length>1?(b[b.length-1]-b[0])/(b.length-1):L;
  // Completa para trás com o intervalo das primeiras batidas (não o do meio da música)
  const p0=b.length>1?b[1]-b[0]:per;while(b[0]-p0>=0)b.unshift(b[0]-p0);
- return{beats:b,per,bpm:Math.round(60*FPS/per)}}
+ return{beats:b,per,bpm:Math.round(60*FPS/per),one:one<0?-1:b.indexOf(one)}}
 
 function analyse(){
- const F=st.F,{beats,per,bpm}=beatsOf(F),n=F.nF;
+ const F=st.F,{beats,per,bpm,one}=beatsOf(F),n=F.nF;
  let mx=0,mb=0;for(const v of F.rms)mx=Math.max(mx,v);for(const v of F.band)mb=Math.max(mb,v);const thr=mx*.06,thrB=mb*.04;
  const em=[],sil=[];
  // Timbres lentos (wC ≥ 1): o acorde novo demora a crescer, então ignora os primeiros 40% de cada batida
@@ -338,19 +363,72 @@ function analyse(){
   if(mj>kb){kb=mj;key={r,mi:false}}if(mn>kb){kb=mn;key={r:(r+9)%12,mi:true}}}
  let b0=path.findIndex(s=>s<TPL.length);if(b0<0)b0=0;
  // Com contagem, o tempo 1 é a batida mais perto do fim da contagem (o áudio começa PRE s antes dela), mesmo que ele espere para entrar
- if(st.grid){const f0=Math.round(PRE*FPS);b0=0;for(let i=1;i<beats.length&&i<st.bpb;i++)if(Math.abs(beats[i]-f0)<Math.abs(beats[b0]-f0))b0=i}
+ // Com metrônomo o tempo 1 é conhecido (o 1º clique depois da contagem); só com contagem, é a batida mais perto dele
+ if(st.grid){if(st.grid.met&&one>=0)b0=one;else{const f0=PRE*FPS-ATQ+(st.grid.lat||0)*FPS;b0=0;for(let i=1;i<beats.length&&i<st.bpb;i++)if(Math.abs(beats[i]-f0)<Math.abs(beats[b0]-f0))b0=i}}
  let last=path.length-1;while(last>b0&&path[last]==TPL.length)last--;
  // Cauda: um compasso final com até meia barra só repetindo o acorde anterior é o som morrendo, não um compasso novo
- const rem=(last-b0+1)%st.bpb;if(rem>0&&rem<=st.bpb/2&&last-rem>=b0&&path.slice(last-rem+1,last+1).every(s=>s==path[last-rem]))last-=rem;
- const bt=i=>i<beats.length?beats[i]/FPS:(beats[beats.length-1]+(i-beats.length+1)*per)/FPS;
+ // ...a não ser que o leitor de notas da Melodia tenha achado um ataque forte ali (o acorde foi tocado de novo)
+ const tocou=(i,j)=>!!st.BP&&st.BP.some(q=>{const f=q.t*FPS-ATQ;return q.a>=.55&&f>=beats[i]-2&&f<(j+1<beats.length?beats[j+1]:beats[beats.length-1]+per)});
+ const rem=(last-b0+1)%st.bpb;if(rem>0&&rem<=st.bpb/2&&last-rem>=b0&&path.slice(last-rem+1,last+1).every(s=>s==path[last-rem])&&!tocou(last-rem+1,last))last-=rem;
+ const bt=i=>((i<beats.length?beats[i]:beats[beats.length-1]+(i-beats.length+1)*per)+ATQ)/FPS;
  const bars=[];for(let i=b0;i<=last;i+=st.bpb){const ch=[];for(let k=0;k<st.bpb;k++){const s=path[i+k];if(s===undefined)break;const prevS=k==0?-1:path[i+k-1];if(s<TPL.length&&(k==0||s!=prevS))ch.push({pos:k,t:TPL[s]});else if(s==TPL.length&&k==0)ch.push({pos:0,t:null})}bars.push({t0:bt(i),t1:bt(i+st.bpb),ch,notes:[]})}
  const beatPos=f=>{let lo=0,hi=beats.length-1;if(f<=beats[0])return(f-beats[0])/per;if(f>=beats[hi])return hi+(f-beats[hi])/per;while(hi-lo>1){const m=(lo+hi)>>1;if(beats[m]<=f)lo=m;else hi=m}return lo+(f-beats[lo])/(beats[hi]-beats[lo])};
+ if(st.BP)notasIA(bars,beatPos,b0);else if(BPS.fail){
  const fx=F.flux,on=[];for(let i=1;i<n-1;i++){let m=0,c=0;for(let j=Math.max(0,i-20);j<=Math.min(n-1,i+20);j++){m+=fx[j];c++}if(fx[i]>1.6*m/c&&fx[i]>=fx[i-1]&&fx[i]>=fx[i+1]&&F.rms[i+1]>thr&&(!on.length||i-on[on.length-1]>4))on.push(i)}
  on.push(n);for(let k=0;k+1<on.length;k++){const a=on[k];let e=on[k+1];const h={};let v=0;for(let f=a+2;f<e;f++){if(F.rms[f]<thr){e=f;break}if(F.pitch[f]>0){h[F.pitch[f]]=(h[F.pitch[f]]||0)+1;v++}}
   if(v<3)continue;let m=-1,bc=0;for(const q in h)if(h[q]>bc){bc=h[q];m=+q}if(bc<v*.4)continue;
   const s=Math.round(beatPos(a)*2)/2-b0,d=Math.max(.5,Math.round((beatPos(e)-beatPos(a))*2)/2),bi=Math.floor(s/st.bpb);
-  if(bars[bi]){const pos=s-bi*st.bpb,nt=bars[bi].notes;if(!nt.length||nt[nt.length-1].pos!=pos)nt.push({pos,dur:Math.min(d,st.bpb-pos),m})}}
+  if(bars[bi]){const pos=s-bi*st.bpb,nt=bars[bi].notes;if(!nt.length||nt[nt.length-1].pos!=pos)nt.push({pos,dur:Math.min(d,st.bpb-pos),m})}}}
  st.A={bars,bpm,key};st.edits=0;render()}
+
+// ---- Melodia com IA: Basic Pitch (Spotify, Apache-2.0) lê várias notas ao mesmo tempo (as duas mãos do piano, o acorde no fim da frase).
+// Os ~2 MB (TensorFlow.js + modelo, em bp/) só são baixados quando a Melodia é aberta, e o áudio não sai do aparelho.
+// Sem WebGL (aparelho muito antigo) a IA ficaria lenta demais: aí volta para o método simples, de uma nota por vez.
+const BPS={busy:false,fail:false};
+const carregaJS=src=>new Promise((ok,err)=>{const e=document.createElement('script');e.src=src;e.onload=ok;e.onerror=()=>err(new Error(src));document.head.appendChild(e)});
+async function melodiaIA(){
+ if(st.mode!='melodia'||!st.buf||st.BP||BPS.busy||BPS.fail)return;const buf=st.buf;BPS.busy=true;
+ try{$('msg').textContent='Preparando o leitor de notas (na primeira vez demora um pouco)…';
+  if(!window.BasicPitch){await carregaJS('bp/tf.min.js');await carregaJS('bp/basic-pitch.js')}
+  await tf.ready();if(tf.getBackend()!='webgl')throw new Error('sem WebGL');
+  const ns=await BasicPitch.transcrever(buf,'bp/model.json',p=>{if(st.buf===buf)$('msg').textContent=`Lendo as notas… ${Math.round(p*100)}%`});
+  if(st.buf===buf){st.BP=ns;analyse();$('msg').textContent=st.A.bars.some(b=>b.notes.length)?'Pronto. Notas lidas com IA: confira ouvindo.':'Não encontrei notas nesta gravação.'}
+ }catch(e){
+  // Sem WebGL: o aparelho não dá conta, usa o método simples de vez. Outro erro (em geral sem internet na 1ª vez):
+  // usa o método simples agora e tenta a IA de novo na próxima vez que a Melodia for aberta.
+  BPS.fail=/WebGL/.test(e.message)?'webgl':'rede';if(st.F)analyse();
+  $('msg').textContent=BPS.fail=='webgl'?'Este aparelho não roda o leitor de notas com IA. A melodia saiu pelo método simples (uma nota por vez).':'Não consegui baixar o leitor de notas (precisa de internet na primeira vez, uns 2 MB). Por enquanto a melodia saiu pelo método simples; abra a Melodia de novo com internet.'}
+ finally{BPS.busy=false;if(st.buf!==buf)melodiaIA()}}
+// Duração escrita: a maior figura que cabe (semibreve, mínima pontuada, mínima, semínima pontuada, semínima, colcheia)
+const FIG=[4,3,2,1.5,1,.5],fig=d=>FIG.find(f=>f<=d+1e-6)||.5;
+function notasIA(bars,beatPos,b0){
+ const I=prof(),grand=I.clef=='grand';
+ // Limpeza. Faixa: violão E2–E6; teclado, o piano inteiro (A0–C8). Notas com menos de 0,1 s saem.
+ // A IA dá "a" (confiança): o que foi tocado fica acima de ~0,55. Abaixo disso aparecem os harmônicos de uma nota
+ // grave (oitava, 12ª, duas oitavas… acima dela, mais curtos que ela) e repetições da nota que ainda soa.
+ // Nota fraca só fica se não for harmônico e se for forte o bastante (0,5) ou começar junto com uma nota forte
+ // durando quase tanto quanto ela (nota de acorde tocada mais baixinho).
+ const lo=I.clef=='g8'?I.lo:21,hi=I.clef=='g8'?I.hi:108;
+ // As batidas estão em quadros do envelope de ataques, que fica ATQ quadros adiantado: t segundos = quadro t*FPS-ATQ
+ // (sem isso as notas caíam ~150 ms atrasadas e às vezes meio tempo depois).
+ const fq=t=>t*FPS-ATQ,fx=st.F.flux;
+ // Houve um ataque de verdade no áudio perto de t? (pico de fluxo 1,6× acima da média local, como no método simples)
+ const ataque=t=>{const c=Math.round(fq(t));let mx=0,m=0,k=0;for(let i=Math.max(0,c-20);i<=Math.min(fx.length-1,c+20);i++){m+=fx[i];k++;if(Math.abs(i-c)<=2)mx=Math.max(mx,fx[i])}return mx>1.6*m/Math.max(1,k)};
+ // Nota que emenda numa nota igual sem ataque novo (no modelo ou no áudio) é a mesma nota continuando:
+ // a IA às vezes quebra em duas uma nota longa enquanto o som decai
+ const lig=[];st.BP.slice().sort((p,q)=>p.t-q.t).forEach(q=>{const p=lig.find(p=>p.m==q.m&&Math.abs(p.t+p.d-q.t)<.06);if(p&&(q.o===0||!ataque(q.t)))p.d=Math.max(p.d,q.t+q.d-p.t);else lig.push({...q,d0:q.d})});
+ const ns=lig.filter(q=>q.d>=.1&&q.m>=lo&&q.m<=hi);
+ // (harmônico compara as durações de antes da emenda: é o primeiro trecho de cada nota que decai junto)
+ const harm=q=>ns.some(h=>h!==q&&[12,19,24,28,31].includes(q.m-h.m)&&h.t<=q.t+.05&&h.t+h.d>=q.t+.05&&h.a>q.a&&q.d0<.6*h.d0);
+ const ok=ns.filter(q=>q.a>=.55||!harm(q)&&(q.a>=.5||ns.some(g=>g!==q&&g.a>=.6&&Math.abs(g.t-q.t)<.08&&q.d>=.5*g.d)));
+ // Cada pauta (mão direita/esquerda no teclado) tem o próprio ritmo; notas que começam juntas viram acorde.
+ const P=[[],[]];ok.forEach(q=>{const s=Math.round(beatPos(fq(q.t))*2)/2-b0;if(s<0)return;P[grand&&q.m+I.tr<60?1:0].push({s,e:beatPos(fq(q.t+q.d))-b0,m:q.m})});
+ P.forEach((arr,sf)=>{const G=new Map();arr.forEach(q=>{if(!G.has(q.s))G.set(q.s,[]);G.get(q.s).push(q)});
+  const ks=[...G.keys()].sort((a,b)=>a-b);
+  ks.forEach((s,i)=>{const bi=Math.floor(s/st.bpb);if(!bars[bi])return;const g=G.get(s),pos=s-bi*st.bpb,nx=i+1<ks.length?ks[i+1]:Infinity;
+   const d=fig(Math.min(Math.round(Math.max(...g.map(q=>q.e))*2)/2-s,nx-s,st.bpb-pos));
+   const ms=[...new Set(g.map(q=>q.m))].sort((a,b)=>a-b);bars[bi].notes.push({pos,dur:d,m:ms[ms.length-1],ms,sf})})});
+ bars.forEach(b=>b.notes.sort((a,c)=>a.pos-c.pos))}
 
 const flatKey=k=>{const r=(k.r+st.tr+120)%12;return k.mi?[2,7,0,5,10,3].includes(r):[5,10,3,8,1,6].includes(r)};
 const nm=(r,fl)=>(fl?FL:SH)[(r+st.tr+120)%12];
@@ -380,25 +458,30 @@ function render(){
    g+=`<line x1="${x0+bw}" x2="${x0+bw}" y1="${top}" y2="${last}" stroke="currentColor" stroke-width="${si==sys.length-1&&k==bs.length-1?3:1.2}"/>`;
    // Áreas de toque, uma por tempo, para corrigir o acorde (desenhadas antes do texto; o texto não recebe clique)
    for(let p=0;p<st.bpb;p++){const c=b.ch.find(c=>c.pos==p);g+=`<rect class="hit" data-b="${bi}" data-p="${p}" x="${X(p)-9}" y="${top-34}" width="${step}" height="28" rx="7" tabindex="0" role="button" aria-label="Compasso ${bi+1}, tempo ${p+1}${c?': '+chName(c.t,fl):''}. Corrigir acorde"/>`}
-   b.ch.forEach(c=>{g+=`<text x="${X(c.pos)-4}" y="${top-14}" font-family="Archivo" font-weight="800" font-size="17"${c.ed?' style="fill:var(--acc)"':''}>${chName(c.t,fl)}</text>`});
+   // Nome do acorde: fonte menor quando o tempo é estreito (celular com acorde mudando a cada tempo), para não encavalar
+   const cf=Math.round(Math.max(10,Math.min(17,step*.55)));
+   b.ch.forEach(c=>{g+=`<text x="${X(c.pos)-4}" y="${top-14}" font-family="Archivo" font-weight="800" font-size="${cf}"${c.ed?' style="fill:var(--acc)"':''}>${chName(c.t,fl)}</text>`});
    if(st.mode=='cifra'){for(let p=0;p<st.bpb;p++){const x=X(p)+2;g+=`<line x1="${x-5}" y1="${midY+6}" x2="${x+5}" y2="${midY-6}" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>`}}
-   else b.notes.forEach(nt=>{const s=grand&&nt.m+st.tr+I.tr<60?SV[1]:SV[0];g+=note(X(nt.pos)+4,nt,fl,s.y,G,s.b,I.tr)})});
+   else b.notes.forEach(nt=>{const s=nt.sf!==undefined?SV[grand?nt.sf:0]:grand&&nt.m+st.tr+I.tr<60?SV[1]:SV[0];g+=note(X(nt.pos)+4,nt,fl,s.y,G,s.b,I.tr)})});
   out.push(`<svg viewBox="0 0 ${W} ${H}" height="${H}" style="color:var(--ink)" role="group" aria-label="Compassos ${si*per+1} a ${si*per+bs.length}">${g}</g></svg>`)});
  box.innerHTML=out.length?out.join(''):'<p>Nada reconhecido.</p>';renderChords(fl);
- if(st.mode=='melodia'&&!A.bars.some(b=>b.notes.length))$('msg').textContent='Nenhuma nota isolada encontrada. O modo Melodia é para notas tocadas uma de cada vez.'}
+ if(st.mode=='melodia'&&!A.bars.some(b=>b.notes.length)&&!BPS.busy&&(st.BP||BPS.fail))$('msg').textContent='Nenhuma nota encontrada.'}
 
 // base = passo diatônico da linha de baixo da pauta (sol: E4 = 30; fá: G2 = 18); tr = semitons para escrever
 function note(x,nt,fl,top,G,base=30,tr=12){
- const m=nt.m+st.tr+tr,pc=((m%12)+12)%12,oc=Math.floor(m/12)-1;
- const L=fl?[0,1,1,2,2,3,4,4,5,5,6,6]:[0,0,1,1,2,3,3,4,4,5,5,6],acc=[1,3,6,8,10].includes(pc)?(fl?'♭':'♯'):'';
- const s=oc*7+L[pc],bot=top+4*G,y=bot-(s-base)*G/2;let g='';
- for(let k=base-2;k>=s;k-=2)g+=`<line x1="${x-9}" x2="${x+9}" y1="${bot-(k-base)*G/2}" y2="${bot-(k-base)*G/2}" stroke="currentColor"/>`;
- for(let k=base+10;k<=s;k+=2)g+=`<line x1="${x-9}" x2="${x+9}" y1="${bot-(k-base)*G/2}" y2="${bot-(k-base)*G/2}" stroke="currentColor"/>`;
- const d=nt.dur,open=d>=2;
- g+=`<ellipse cx="${x}" cy="${y}" rx="5.4" ry="3.9" transform="rotate(-20 ${x} ${y})" fill="${open?'none':'currentColor'}" stroke="currentColor" stroke-width="${open?1.6:1}"/>`;
- if(acc)g+=`<text x="${x-17}" y="${y+5}" font-size="15">${acc}</text>`;
- if(d==3||d==1.5)g+=`<circle cx="${x+10}" cy="${y-2}" r="1.7" fill="currentColor"/>`;
- if(d<4){const up=s<base+4,sx=up?x+5:x-5,ey=up?y-28:y+28;g+=`<line x1="${sx}" x2="${sx}" y1="${y}" y2="${ey}" stroke="currentColor" stroke-width="1.3"/>`;
+ const L=fl?[0,1,1,2,2,3,4,4,5,5,6,6]:[0,0,1,1,2,3,3,4,4,5,5,6],bot=top+4*G,Y=k=>bot-(k-base)*G/2;
+ // Cada nota vira um passo diatônico (linha/espaço); acorde = várias cabeças na mesma haste
+ const H=(nt.ms||[nt.m]).map(m0=>{const m=m0+st.tr+tr,pc=((m%12)+12)%12,oc=Math.floor(m/12)-1;return{s:oc*7+L[pc],acc:[1,3,6,8,10].includes(pc)?(fl?'♭':'♯'):''}}).sort((p,q)=>p.s-q.s);
+ const sLo=H[0].s,sHi=H[H.length-1].s,d=nt.dur,open=d>=2,up=(sLo+sHi)/2<base+4;let g='';
+ for(let k=base-2;k>=sLo;k-=2)g+=`<line x1="${x-9}" x2="${x+9}" y1="${Y(k)}" y2="${Y(k)}" stroke="currentColor"/>`;
+ for(let k=base+10;k<=sHi;k+=2)g+=`<line x1="${x-9}" x2="${x+9}" y1="${Y(k)}" y2="${Y(k)}" stroke="currentColor"/>`;
+ // Notas vizinhas (segunda) não cabem uma em cima da outra: a de cima vai para o lado
+ let ac=0;H.forEach((h,i)=>{const yy=Y(h.s);h.sh=i>0&&h.s-H[i-1].s<=1&&!H[i-1].sh?(up?10:-10):0;const cx=x+h.sh;
+  g+=`<ellipse cx="${cx}" cy="${yy}" rx="5.4" ry="3.9" transform="rotate(-20 ${cx} ${yy})" fill="${open?'none':'currentColor'}" stroke="currentColor" stroke-width="${open?1.6:1}"/>`;
+  if(h.acc){g+=`<text x="${x-17-(ac%2)*9}" y="${yy+5}" font-size="15">${h.acc}</text>`;ac++}
+  if(d==3||d==1.5)g+=`<circle cx="${x+10+Math.max(0,h.sh)}" cy="${yy-2}" r="1.7" fill="currentColor"/>`});
+ const s=up?sLo:sHi,y=Y(s),y2=Y(up?sHi:sLo);
+ if(d<4){const sx=up?x+5:x-5,ey=up?y2-28:y2+28;g+=`<line x1="${sx}" x2="${sx}" y1="${y}" y2="${ey}" stroke="currentColor" stroke-width="1.3"/>`;
   if(d<1)g+=`<path d="M${sx} ${ey} q8 ${up?8:-8} 6 ${up?18:-18}" fill="none" stroke="currentColor" stroke-width="1.8"/>`}
  return g}
 
@@ -413,7 +496,8 @@ async function recStart(){
  // Contagem: agenda os cliques no relógio do áudio (preciso) e só guarda o som a partir de PRE s antes do fim da contagem
  const met=st.cnt.on&&st.cnt.met,bpm=st.cnt.on?st.cnt.bpm:0,spb=bpm?60/bpm:0,t1=ctx.currentTime+.2,cEnd=bpm?t1+st.bpb*spb:0;
  if(bpm)for(let i=0;i<st.bpb;i++){clickAt(ctx,t1+i*spb,i==0);setTimeout(()=>{if(R.on&&R.cut)$('lvC').textContent=i+1},Math.max(0,(t1+i*spb-ctx.currentTime)*1000))}
- R={on:true,ctx,ms,sp,src,chunks:[],len:0,rate:ctx.sampleRate,hist:[],last:'',t0:performance.now()+Math.max(0,cEnd-ctx.currentTime)*1000,cut:bpm?cEnd-PRE:0,grid:bpm,met};
+ const lat=(ctx.outputLatency||0)+(ctx.baseLatency||0)+((ms.getAudioTracks()[0]?.getSettings?.().latency)||0);
+ R={on:true,lat,ctx,ms,sp,src,chunks:[],len:0,rate:ctx.sampleRate,hist:[],last:'',t0:performance.now()+Math.max(0,cEnd-ctx.currentTime)*1000,cut:bpm?cEnd-PRE:0,grid:bpm,met};
  // Metrônomo: agendador com folga (o setInterval só acorda; quem marca a hora exata é o relógio do áudio)
  if(met){let k=st.bpb;R.mt=setInterval(()=>{while(t1+k*spb<ctx.currentTime+.15){clickAt(ctx,t1+k*spb,k%st.bpb==0,.7);k++}},40)}
  // Bolinhas dos tempos: acompanham a contagem e, com metrônomo, a gravação inteira
@@ -442,7 +526,7 @@ async function recStop(){if(!R.on)return;R.on=false;clearInterval(R.iv);clearInt
  $('recL').textContent='Gravar';$('rec').classList.remove('on');$('live').hidden=true;
  if(R.len<R.rate*2){$('msg').textContent='Gravação curta demais. Toque pelo menos alguns compassos.';return}
  const all=new Float32Array(R.len);let o=0;for(const c of R.chunks){all.set(c,o);o+=c.length}
- $('ttl').textContent='Gravação de '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});st.demo=false;st.grid=R.grid?{bpm:R.grid,met:R.met}:null;setSub(R.grid?`gravado com ${R.met?'metrônomo':'contagem'} a ${R.grid} bpm · `:'gravado pelo microfone · ');
+ $('ttl').textContent='Gravação de '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});st.demo=false;st.grid=R.grid?{bpm:R.grid,met:R.met,lat:R.lat}:null;setSub(R.grid?`gravado com ${R.met?'metrônomo':'contagem'} a ${R.grid} bpm · `:'gravado pelo microfone · ');
  try{const b=new AudioBuffer({length:all.length,sampleRate:R.rate,numberOfChannels:1});b.copyToChannel(all,0);const oc=new OfflineAudioContext(1,Math.ceil(b.duration*SR),SR),s=oc.createBufferSource();s.buffer=b;s.connect(oc.destination);s.start();run((await oc.startRendering()).getChannelData(0))}catch(e){run(rs(all,R.rate))}
  R.ctx.close()}
 async function load(file){
@@ -452,9 +536,9 @@ async function load(file){
   $('ttl').textContent=file.name.replace(/\.[^.]+$/,'');st.demo=false;st.grid=null;setSub(dec.duration>240?'primeiros 4 minutos · ':'');
   run(r.getChannelData(0))}catch(e){$('msg').textContent='Não consegui ler esse arquivo. Tente MP3, M4A, WAV ou um vídeo MP4.'}}
 
-function run(x){st.buf=x;st.tr=0;st.lagMul=1;$('msg').textContent='Analisando…';$('play').disabled=false;
+function run(x){st.buf=x;st.BP=null;st.tr=0;st.lagMul=1;$('msg').textContent='Analisando…';$('play').disabled=false;
  setTimeout(()=>{let m=0;for(const v of x)m=Math.max(m,Math.abs(v));if(m>0&&m<.5){const g=.5/m;for(let i=0;i<x.length;i++)x[i]*=g}
-  st.F=frames(x);analyse();$('msg').textContent='Pronto. Confira ouvindo: o compasso que está tocando fica destacado.'},30)}
+  st.F=frames(x);analyse();$('msg').textContent='Pronto. Confira ouvindo: o compasso que está tocando fica destacado.';melodiaIA()},30)}
 
 const subNote=()=>prof().clef=='g8'?'violão soa uma oitava abaixo do escrito':prof().n.toLowerCase()+' · teclado soa como está escrito';
 function setSub(pre){st.pre=pre;$('sub').textContent=pre+subNote()}
@@ -498,7 +582,7 @@ function tick(){const t=st.ctx.currentTime-st.t0,bi=st.A?st.A.bars.findIndex(b=>
 $('rec').addEventListener('click',()=>R.on?recStop():recStart());
 $('f').addEventListener('change',e=>{const f=e.target.files[0];if(f)load(f)});
 $('play').addEventListener('click',play);
-const setMode=m=>{st.mode=m;$('mC').setAttribute('aria-pressed',m=='cifra');$('mM').setAttribute('aria-pressed',m=='melodia');$('msg').textContent='';render()};
+const setMode=m=>{st.mode=m;if(m=='melodia'&&BPS.fail=='rede')BPS.fail=false;$('mC').setAttribute('aria-pressed',m=='cifra');$('mM').setAttribute('aria-pressed',m=='melodia');$('msg').textContent='';render();melodiaIA()};
 $('mC').addEventListener('click',()=>setMode('cifra'));$('mM').addEventListener('click',()=>setMode('melodia'));
 $('tD').addEventListener('click',()=>{st.tr--;render()});$('tU').addEventListener('click',()=>{st.tr++;render()});
 // Refazer a análise apaga as correções manuais: pergunta antes
@@ -658,6 +742,7 @@ $('sv').addEventListener('close',()=>{if($('sv').returnValue!='ok')return;const 
 // ---- Modo offline: o service worker guarda o app no aparelho (só funciona em HTTPS ou localhost)
 if('serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
+if(location.hostname=='127.0.0.1')window.__P={st,run,analyse,setMode,setIns,kb,pluck,forma,BPS,setSeed:v=>{seed=v}};
 setIns(st.ins);showDemo();
 }
 </script></body></html>

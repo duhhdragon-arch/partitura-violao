@@ -8,9 +8,11 @@
 //
 // ATENÇÃO: o Repertório Palco está no MESMO origin (duhhdragon-arch.github.io) e o CacheStorage é
 // por origin, não por pasta. Por isso cada app só apaga caches com o PRÓPRIO prefixo.
-// Mudar CACHE só quando a lista ARQUIVOS mudar (arquivo novo ou removido).
+// Mudar CACHE quando a lista ARQUIVOS mudar (arquivo novo ou removido) e SEMPRE que algo em bp/ mudar:
+// o leitor de notas (bp/) é guardado na primeira vez que a Melodia abre e depois vem só do cache
+// ("cache primeiro", ignorando ?v=), então sem trocar CACHE o aparelho continua com a versão velha.
 const PREFIXO = 'partitura-';
-const CACHE = PREFIXO + 'v2';
+const CACHE = PREFIXO + 'v3';
 const ARQUIVOS = [
   './', './manifest.json', './icon.svg', './fonts.css',
   './fonts/archivo-latin.woff2', './fonts/archivo-latin-ext.woff2',
