@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Violão e teclado para partitura</title>
+<title>Partitura · teclado e violão</title>
 <link rel="manifest" href="manifest.json"><meta name="theme-color" content="#151515"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon.svg">
 <link rel="stylesheet" href="fonts.css">
 <style>
@@ -158,9 +158,9 @@ dialog form{display:grid;gap:8px}
 @media(prefers-reduced-motion:reduce){.dot{animation:none}.hl,button,.sheet,h1 em{transition:none}}
 </style></head><body>
 <section class="band hero"><div class="wrap">
-<div class="brand"><img src="icon.svg" alt="">Partitura <small>violão · teclado</small></div>
-<h1>Do <em>violão</em> e do <em>teclado</em> para a partitura</h1>
-<p class="lede">Escolha o instrumento, toque perto do microfone ou envie uma gravação (do celular serve, até em vídeo). A página descobre o andamento, o tom e os acordes, e escreve a cifra numa pauta.</p>
+<div class="brand"><img src="icon.svg" alt="">Partitura <small>teclado · violão</small></div>
+<h1>Do <em>teclado</em> e do <em>violão</em> para a partitura</h1>
+<p class="lede">Escolha o instrumento, toque perto do microfone ou envie uma gravação (do celular serve, até em vídeo). A página descobre o andamento, o tom e os acordes, e escreve a cifra numa pauta. No modo Melodia, escreve as notas.</p>
 <div class="panel">
  <div class="row">
   <div class="g"><span class="lbl">Instrumento</span><div class="seg acc" role="group" aria-label="Instrumento"><button id="iT" aria-pressed="true">Teclado</button><button id="iV" aria-pressed="false">Violão</button></div></div>
@@ -194,7 +194,7 @@ dialog form{display:grid;gap:8px}
 </div>
 <div class="stats"><div class="stat"><span>Tom</span><b id="kKey">–</b></div><div class="stat"><span>Andamento</span><b id="kBpm">–</b></div><div class="stat"><span>Compassos</span><b id="kBars">–</b></div><div class="stat"><span>Transposição</span><b id="kTr">0</b></div></div>
 <div class="live" id="live" hidden><span class="dot"></span><span id="lvT">0:00</span><span class="bts" id="lvB" hidden aria-hidden="true"></span><b id="lvC">…</b><span id="lvH"></span></div>
-<div class="sheet"><h3 id="ttl">Exemplo: C – Am – F – G</h3><div class="sub" id="sub">gravação de demonstração gerada aqui mesmo · violão soa uma oitava abaixo do escrito</div><div class="pinfo" id="pinfo"></div><div id="score"></div><div class="chd" id="chd"></div><div class="pfoot">Partitura · duhhdragon-arch.github.io/partitura-violao</div></div>
+<div class="sheet"><h3 id="ttl">Exemplo: C – Am – F – G · Piano</h3><div class="sub" id="sub">gravação de demonstração gerada aqui mesmo · piano · teclado soa como está escrito</div><div class="pinfo" id="pinfo"></div><div id="score"></div><div class="chd" id="chd"></div><div class="pfoot">Partitura · duhhdragon-arch.github.io/partitura-violao</div></div>
 <div id="msg" role="status"></div>
 <p class="hint">Dica: toque num acorde da folha (ou num tempo vazio) para corrigir.</p>
 </div></section>
@@ -222,9 +222,9 @@ dialog form{display:grid;gap:8px}
  <div class="acts"><button value="cancel" class="push" formnovalidate>Cancelar</button><button value="ok" class="pri">Abrir no Repertório</button></div>
 </form></dialog>
 <section class="band" style="padding-top:0"><div class="wrap cols">
-<div><h2>O que funciona bem</h2><p><span class="ok">Acordes e cifra.</span> O som é decomposto nas 12 notas da escala e comparado com moldes de acordes maiores, menores e com sétima, batida por batida.</p><p><span class="ok">Andamento e tom.</span> Os ataques das batidas marcam o pulso; o conjunto das notas indica o tom.</p><p><span class="ok">Teclado.</span> Piano, órgão, strings e pad. No modo Melodia o teclado usa pauta dupla: clave de sol para a mão direita, clave de fá para a esquerda.</p><p><span class="ok">Melodia com IA.</span> Um leitor de notas treinado (Basic Pitch) pega várias notas ao mesmo tempo: a melodia, o baixo da mão esquerda e o acorde do fim da frase. Na primeira vez ele baixa uns 2 MB; depois funciona até sem internet. O áudio continua sem sair do aparelho.</p></div>
-<div><h2>Onde ainda erra</h2><p>Acordes com nona, suspensos ou com baixo trocado (C/E) saem simplificados. Na Melodia, nota rápida ou repetida pode sair meio tempo deslocada, e a partitura é simplificada (sem pausas nem ligaduras). Se o andamento sair o dobro ou a metade, use ½× ou 2×.</p><p>Pad e strings entram devagar, sem ataque marcado: o andamento é deduzido pelas trocas de acorde. Confira ouvindo e corrija com ½× ou 2× se precisar.</p></div>
-<div><h2>Dica de gravação</h2><p>Grave perto do instrumento, num lugar quieto. Celular tocando outro celular funciona, mas alto-falante pequeno perde o grave: uma caixinha de som ajuda. Toque em Gravar e comece tocando: silêncio longo no começo atrapalha achar o primeiro compasso. Arquivos de até 4 minutos.</p></div>
+<div><h2>O que funciona bem</h2><p><span class="ok">Acordes e cifra.</span> O som é decomposto nas 12 notas da escala e comparado com moldes de acordes maiores, menores e com sétima, batida por batida.</p><p><span class="ok">Andamento e tom.</span> Os ataques das batidas marcam o pulso, e o app acompanha quem acelera ou desacelera aos poucos. Com o Metrônomo ligado, as batidas seguem os cliques. O conjunto das notas indica o tom.</p><p><span class="ok">Teclado.</span> Piano, órgão, strings e pad. No modo Melodia o teclado usa pauta dupla: clave de sol para a mão direita, clave de fá para a esquerda.</p><p><span class="ok">Melodia com IA.</span> Um leitor de notas treinado (Basic Pitch) pega várias notas ao mesmo tempo: a melodia, o baixo da mão esquerda e o acorde do fim da frase. Na primeira vez ele baixa uns 2 MB; depois funciona até sem internet. O áudio continua sem sair do aparelho.</p></div>
+<div><h2>Onde ainda erra</h2><p>Acordes com nona, suspensos ou com baixo trocado (C/E) saem simplificados. A Melodia sai simplificada: sem pausas, ligaduras nem tercinas, e a menor figura é a colcheia. Se o andamento sair o dobro ou a metade, use ½× ou 2×.</p><p>Sem metrônomo, uma mudança brusca de andamento (trecho lento que vira rápido) confunde. Pad e strings entram devagar, sem ataque marcado: sem metrônomo, o andamento sai das trocas de acorde. Nesses casos, grave com o Metrônomo ligado.</p></div>
+<div><h2>Dica de gravação</h2><p>Grave perto do instrumento, num lugar quieto. Com a contagem ligada, comece no 1 que vem depois do 1-2-3-4. Para tirar uma música nova, ligue o Metrônomo: os compassos caem no lugar certo.</p><p>Para ouvir o clique, prefira alto-falante ou fone com fio. Fone Bluetooth atrasa o som; o app tenta compensar, mas nem sempre acerta. Celular tocando outro celular funciona, mas alto-falante pequeno perde o grave: uma caixinha de som ajuda. Gravações e arquivos: até 4 minutos.</p></div>
 </div></section>
 <footer class="band"><div class="wrap"><span>Tudo roda no seu navegador: o áudio não sai do aparelho. Leitor de notas da Melodia: <a href="https://github.com/spotify/basic-pitch">Basic Pitch</a> (Spotify) com <a href="https://github.com/tensorflow/tfjs">TensorFlow.js</a> (Google), licença <a href="bp/LICENSE-basic-pitch.txt">Apache 2.0</a>.</span><a href="https://github.com/duhhdragon-arch/partitura-violao">código no GitHub</a></div></footer>
 <script>

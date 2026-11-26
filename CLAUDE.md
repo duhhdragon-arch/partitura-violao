@@ -203,13 +203,7 @@ Tudo em 25/11/2026.
   - `sw.js` em v3 com a regra do `bp/`.
   - Rodapé com crédito/licença; textos "O que funciona bem" e "Onde ainda erra" com a Melodia com IA.
   - Teste novo `testes/teste6.js`.
-- **Pendente (26/11/2026)**: revisar os textos fixos da página, que o Eduardo pediu para conferir. Achados ainda não aplicados:
-  - **Topo**: `<title>` "Violão e teclado para partitura", marca "Partitura violão · teclado", `<h1>` "Do violão e do teclado…" (inverter para teclado primeiro). A frase "escreve a cifra numa pauta" deve falar também das notas (Melodia). O `manifest.json` tem `name` "Violão para partitura".
-  - **Texto inicial da folha** (`#sub` no HTML): diz "violão soa uma oitava abaixo do escrito", mas o padrão agora é piano (o JS troca, mas aparece um instante).
-  - **"O que funciona bem → Andamento e tom"**: falar que acompanha quem acelera/desacelera e que, com metrônomo, as batidas seguem os cliques.
-  - **"Onde ainda erra"**: tirar "nota rápida ou repetida pode sair meio tempo deslocada" (corrigido). Pôr: partitura simplificada (sem pausas/ligaduras/tercinas, menor figura = colcheia); sem metrônomo, mudança **brusca** de andamento confunde; pad/strings sem metrônomo dependem das trocas de acorde.
-  - **"Dica de gravação"**: "Toque em Gravar e comece tocando" é de antes da contagem. Trocar por: com a contagem, comece no 1 depois do 1-2-3-4; para música nova, ligue o Metrônomo; prefira alto-falante ou fone com fio (Bluetooth atrasa o clique; o app compensa, mas não é garantido). Manter "perto do instrumento, lugar quieto, caixinha de som ajuda, até 4 minutos".
-  - Depois: rodar `teste2`, `teste4` e `teste6`, fazer o commit e o push (o Eduardo já deu o ok para subir), e conferir o Pages.
+- **Textos da página revisados (26/11/2026)**: título, marca, `<h1>`, `manifest.json` e README com teclado primeiro; frase do topo cita a Melodia; título/subtítulo iniciais da folha já no piano; "Andamento e tom", "Onde ainda erra" e "Dica de gravação" atualizados (contagem, metrônomo, fone com fio). Testes depois disso: `teste2` igual, `teste4` 600/600, `teste6` igual à tabela da Melodia. Publicado junto com a Melodia com IA.
 - Próximo passo com o tio: testar a Melodia no piano com gravação real (melodia com acorde no fim, as duas mãos) e mandar retorno. Se escorregar, pedir a gravação.
 
 ## Limitações conhecidas
