@@ -155,6 +155,8 @@ dialog form{display:grid;gap:8px}
 .kw{fill:#fff;stroke:#444;stroke-width:1}.kbk{fill:#1d1d22}.kon{fill:#2346d6}.kbk+.kon{fill:#8fb0ff}.kon.krt{fill:#f07a2e}
 @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.push{margin-left:0}}
 @media(max-width:520px){#rec,.cntg{flex:1 1 100%}#upl,#play{flex:1 1 0;padding:0 12px}.lg{display:none}.acts button{flex:1 1 0;padding:0 8px}.cnt>button{flex:1 1 auto}}
+button,input,.file{touch-action:manipulation}
+#cTap{min-width:7.2em;font-variant-numeric:tabular-nums}#cTap.flash{animation:tapf .18s ease-out}@keyframes tapf{from{background:var(--acc);color:var(--accon);border-color:var(--acc)}}
 @media(prefers-reduced-motion:reduce){.dot{animation:none}.hl,button,.sheet,h1 em{transition:none}}
 </style></head><body>
 <section class="band hero"><div class="wrap">
@@ -613,9 +615,18 @@ $('cOn').addEventListener('click',()=>{st.cnt.on=!st.cnt.on;cntSync()});
 $('cMet').addEventListener('click',()=>{const v=!(st.cnt.on&&st.cnt.met);st.cnt.met=v;if(v)st.cnt.on=true;cntSync()});
 $('cDn').addEventListener('click',()=>{st.cnt.bpm=clampB(st.cnt.bpm-1);cntSync()});$('cUp').addEventListener('click',()=>{st.cnt.bpm=clampB(st.cnt.bpm+1);cntSync()});
 $('cBpm').addEventListener('change',e=>{st.cnt.bpm=clampB(e.target.value);cntSync()});
-let taps=[];$('cTap').addEventListener('click',()=>{const t=performance.now();if(taps.length&&t-taps[taps.length-1]>2000)taps=[];taps.push(t);taps=taps.slice(-6);
- if(taps.length>1){const d=(taps[taps.length-1]-taps[0])/(taps.length-1);st.cnt.bpm=clampB(60000/d);st.cnt.on=true;cntSync();$('msg').textContent=`Andamento da contagem: ${st.cnt.bpm} bpm (${taps.length} toques).`}
- else $('msg').textContent='Continue batendo no ritmo…'});
+// Bater ritmo (feedback do tio, 26/11/2026: "sem função"). pointerdown em vez de click: sem o atraso do click e sem o zoom
+// de toque duplo do celular, que engolia toques rápidos. Cada toque faz um clique e pisca; o resultado aparece no próprio botão.
+let taps=[],tapT=0;const tapB=$('cTap');
+function tap(){const t=performance.now();if(taps.length&&t-taps[taps.length-1]>2000)taps=[];taps.push(t);taps=taps.slice(-8);
+ try{st.ctx=st.ctx||new AudioContext();st.ctx.resume();clickAt(st.ctx,st.ctx.currentTime,taps.length==1,.7)}catch(e){}
+ tapB.classList.remove('flash');void tapB.offsetWidth;tapB.classList.add('flash');
+ if(taps.length>1){const iv=taps.slice(1).map((v,i)=>v-taps[i]).sort((a,b)=>a-b),d=iv[iv.length>>1]; // mediana: um toque torto não estraga a conta
+  st.cnt.bpm=clampB(60000/d);st.cnt.on=true;cntSync();tapB.textContent=`${st.cnt.bpm} bpm`;$('msg').textContent=`Andamento da contagem: ${st.cnt.bpm} bpm (${taps.length} toques).`}
+ else tapB.textContent='Continue…';
+ clearTimeout(tapT);tapT=setTimeout(()=>{tapB.textContent='Bater ritmo';taps=[]},2000)}
+tapB.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();tap()});
+tapB.addEventListener('click',e=>{if(e.detail===0)tap()}); // teclado (Enter/Espaço) gera click com detail 0
 cntSync();
 
 // ---- Correção de acorde: toque num tempo da folha, escolha nota e tipo, ouça e aplique.
