@@ -238,6 +238,7 @@ Tudo em 25/11/2026.
 7. ~~Basic Pitch no navegador~~ (feito 26/11/2026 para a Melodia). Versão multi-instrumento: separar com Demucs e transcrever com Basic Pitch / YourMT3 num servidor Python. A ordem "separar → transcrever" acumula erro, por isso os modelos conjuntos são melhores.
 8. Foco em música brasileira (sertanejo, MPB, pagode, louvor) como diferencial.
 9. Melodia: pausas e ligaduras; exportar MusicXML para o MuseScore.
+11. **Entrada MIDI por cabo (ideia guardada em 26/11/2026, para depois)**: o teclado do tio é um Yamaha CK61 (Bluetooth só recebe áudio; USB TO HOST com MIDI e áudio 2×2) e o celular é Samsung Android. Com cabo USB-B ↔ USB-C (OTG) no Chrome: Web MIDI → Melodia e cifra pelas teclas exatas, e áudio limpo e com pouco atraso para o looper. Antes de programar, ele testa o cabo em https://midi.city. Só ler MIDI, nunca enviar (sem sysex).
 10. Capotraste no violão ("Capo 2: formas de G") e mais tipos de acorde (sus4, 9, baixo invertido), que o louvor usa muito (sugeridos ao Eduardo em 25/11/2026).
 
 ## Convenções
