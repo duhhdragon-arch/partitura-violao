@@ -184,7 +184,7 @@ button,input,.file{touch-action:manipulation}
  </div>
  <div class="row cap">
   <button class="pri big" id="rec"><span class="rd"></span><span id="recL">Gravar</span></button>
-  <label class="file big" id="upl">↑ Enviar<span class="lg">gravação</span><input type="file" id="f" accept="audio/*,video/*"></label>
+  <label class="file big" id="upl">↑ Abrir<span class="lg">arquivo</span><input type="file" id="f" accept=".mp3,.m4a,.aac,.wav,.ogg,.oga,.opus,.flac,.amr,.3gp,.mp4,.mov,.webm,.mkv"></label>
   <button class="big" id="play" disabled>▶ Ouvir</button>
   <div class="g cntg"><span class="lbl">Contagem e metrônomo</span><div class="cnt">
    <button id="cOn" class="tog" aria-pressed="true" title="Contar 1-2-3-4 antes de gravar">1·2·3·4</button>
@@ -204,6 +204,7 @@ button,input,.file{touch-action:manipulation}
    <button id="save" class="tog2">♫ Salvar no Repertório</button>
    <button id="print">🖨 Imprimir / PDF</button>
    <button id="copy">⧉ Copiar cifra</button>
+   <button id="shr" disabled title="Manda o áudio desta gravação (por WhatsApp, e-mail…)">↗ Compartilhar áudio</button>
   </div></div>
  </div>
 </div>
@@ -231,7 +232,7 @@ button,input,.file{touch-action:manipulation}
 </form></dialog>
 <dialog id="lp" aria-labelledby="lpT"><form method="dialog">
  <h3 id="lpT">Looper</h3>
- <p class="svI">Grave alguns compassos e eles ficam repetindo para você treinar por cima. Dá para gravar outras camadas em cima. Tocando por caixa ou teclado Bluetooth, use antes o "Medir atraso" lá embaixo.</p>
+ <p class="svI">Grave alguns compassos e eles ficam repetindo para você treinar por cima. Dá para gravar outras camadas em cima. Antes da primeira vez, acerte o atraso do som lá embaixo ("Calibrar tocando").</p>
  <div class="lprow">
   <div class="g"><span class="lbl">Compassos</span><div class="seg" id="lpN" role="group" aria-label="Tamanho do loop"><button type="button" data-n="1">1</button><button type="button" data-n="2">2</button><button type="button" data-n="4">4</button><button type="button" data-n="8">8</button></div></div>
   <div class="g"><span class="lbl">Andamento</span><div class="cnt"><div class="seg"><button type="button" id="lpDn" aria-label="Mais lento">−</button><b id="lpBpm">80</b><span class="u">bpm</span><button type="button" id="lpUp" aria-label="Mais rápido">+</button></div></div></div>
@@ -242,8 +243,8 @@ button,input,.file{touch-action:manipulation}
  <div class="lpl" id="lpL"><small>nenhuma ainda</small></div>
  <div class="acts"><button type="button" id="lpClk" class="tog" aria-pressed="true">♩ Clique</button><button type="button" id="lpClr" disabled>Apagar tudo</button></div>
  <details class="lpd"><summary>Atraso do som: <b id="lpLat">–</b></summary>
-  <p class="svI">Se a camada nova sair atrasada ou adiantada em relação ao loop, meça o atraso deste aparelho: sem fone, volume médio, lugar quieto. Ou ajuste no ouvido, de 5 em 5 ms (as camadas gravadas se ajustam na hora).</p>
-  <div class="acts"><button type="button" id="lpCal">Medir atraso</button><div class="seg"><button type="button" id="lpLd">−5 ms</button><button type="button" id="lpLu">+5 ms</button></div></div>
+  <p class="svI">Se a camada nova sair atrasada ou adiantada em relação ao loop: <b>Calibrar tocando</b> (serve com fone ou sem): vêm 2 cliques de contagem e depois 8; toque uma nota curta junto com cada um dos 8, do jeito que você toca no loop. <b>Medir atraso</b> é automático, mas só funciona sem fone (o microfone precisa ouvir os cliques). Dá para ajustar no ouvido, de 5 em 5 ms; as camadas já gravadas se ajustam na hora.</p>
+  <div class="acts"><button type="button" class="pri" id="lpCalT">Calibrar tocando</button><button type="button" id="lpCal">Medir atraso</button><div class="seg"><button type="button" id="lpLd">−5 ms</button><button type="button" id="lpLu">+5 ms</button></div></div>
  </details>
  <p class="svI" id="lpM"></p>
  <div class="acts"><button value="x" class="pri push">Fechar</button></div>
@@ -450,11 +451,19 @@ function notasIA(bars,beatPos,b0){
  const ataque=t=>{const c=Math.round(fq(t));let mx=0,m=0,k=0;for(let i=Math.max(0,c-20);i<=Math.min(fx.length-1,c+20);i++){m+=fx[i];k++;if(Math.abs(i-c)<=2)mx=Math.max(mx,fx[i])}return mx>1.6*m/Math.max(1,k)};
  // Nota que emenda numa nota igual sem ataque novo (no modelo ou no áudio) é a mesma nota continuando:
  // a IA às vezes quebra em duas uma nota longa enquanto o som decai
- const lig=[];st.BP.slice().sort((p,q)=>p.t-q.t).forEach(q=>{const p=lig.find(p=>p.m==q.m&&Math.abs(p.t+p.d-q.t)<.06);if(p&&(q.o===0||!ataque(q.t)))p.d=Math.max(p.d,q.t+q.d-p.t);else lig.push({...q,d0:q.d})});
+ // O ataque no áudio pode ser de OUTRA nota começando ali (tio, 27/11/2026: A4 seguia soando e o ataque do E5 fez o A4
+ // parecer tocado de novo). Se a continuação é bem mais fraca que o começo e outra nota começa junto, é a mesma nota.
+ const junto=(q,p)=>q.a<.5&&q.a<=p.a-.15&&st.BP.some(o=>o.m!=q.m&&Math.abs(o.t-q.t)<.03);
+ const lig=[];st.BP.slice().sort((p,q)=>p.t-q.t).forEach(q=>{const p=lig.find(p=>p.m==q.m&&Math.abs(p.t+p.d-q.t)<.06);if(p&&(q.o===0||!ataque(q.t)||junto(q,p)))p.d=Math.max(p.d,q.t+q.d-p.t);else lig.push({...q,d0:q.d})});
  const ns=lig.filter(q=>q.d>=.1&&q.m>=lo&&q.m<=hi);
  // (harmônico compara as durações de antes da emenda: é o primeiro trecho de cada nota que decai junto)
- const harm=q=>ns.some(h=>h!==q&&[12,19,24,28,31].includes(q.m-h.m)&&h.t<=q.t+.05&&h.t+h.d>=q.t+.05&&h.a>q.a&&q.d0<.6*h.d0);
- const ok=ns.filter(q=>q.a>=.55||!harm(q)&&(q.a>=.5||ns.some(g=>g!==q&&g.a>=.6&&Math.abs(g.t-q.t)<.08&&q.d>=.5*g.d)));
+ // Ou: uma oitava acima, fraca (< 0,4), começando logo depois de uma nota bem mais forte (gravação real do tio:
+ // A4 0,79 → A5 0,33). Começar depois evita pegar nota de acorde, que começa junto.
+ const harm=q=>ns.some(h=>h!==q&&[12,19,24,28,31].includes(q.m-h.m)&&h.t<=q.t+.05&&h.t+h.d>=q.t+.05&&h.a>q.a&&(q.d0<.6*h.d0||q.m-h.m==12&&q.a<.4&&h.a>=q.a+.3&&h.t<q.t-.02));
+ // Fantasma abaixo (gravação real do tio, 27/11/2026): a IA às vezes "ouve" uma nota uma ou duas oitavas abaixo da que
+ // foi tocada, começando junto e bem mais fraca (D5 0,74 → D4 0,40; A4 → A3 0,25–0,44). No teclado ela caía na clave de fá.
+ const sub=q=>ns.some(h=>h!==q&&[12,24].includes(h.m-q.m)&&Math.abs(h.t-q.t)<.08&&h.a>=q.a+.15);
+ const ok=ns.filter(q=>q.a>=.55||!harm(q)&&!sub(q)&&(q.a>=.5||ns.some(g=>g!==q&&g.a>=.6&&Math.abs(g.t-q.t)<.08&&q.d>=.5*g.d)));
  // Cada pauta (mão direita/esquerda no teclado) tem o próprio ritmo; notas que começam juntas viram acorde.
  const P=[[],[]];ok.forEach(q=>{const s=Math.round(beatPos(fq(q.t))*2)/2-b0;if(s<0)return;P[grand&&q.m+I.tr<60?1:0].push({s,e:beatPos(fq(q.t+q.d))-b0,m:q.m})});
  P.forEach((arr,sf)=>{const G=new Map();arr.forEach(q=>{if(!G.has(q.s))G.set(q.s,[]);G.get(q.s).push(q)});
@@ -560,17 +569,17 @@ async function recStop(){if(!R.on)return;R.on=false;clearInterval(R.iv);clearInt
  $('recL').textContent='Gravar';$('rec').classList.remove('on');$('live').hidden=true;
  if(R.len<R.rate*2){$('msg').textContent='Gravação curta demais. Toque pelo menos alguns compassos.';return}
  const all=new Float32Array(R.len);let o=0;for(const c of R.chunks){all.set(c,o);o+=c.length}
- $('ttl').textContent='Gravação de '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});st.demo=false;st.grid=R.grid?{bpm:R.grid,met:R.met,lat:R.lat}:null;setSub(R.grid?`gravado com ${R.met?'metrônomo':'contagem'} a ${R.grid} bpm · `:'gravado pelo microfone · ');
+ $('ttl').textContent='Gravação de '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});st.demo=false;st.gravado=true;st.grid=R.grid?{bpm:R.grid,met:R.met,lat:R.lat}:null;setSub(R.grid?`gravado com ${R.met?'metrônomo':'contagem'} a ${R.grid} bpm · `:'gravado pelo microfone · ');
  try{const b=new AudioBuffer({length:all.length,sampleRate:R.rate,numberOfChannels:1});b.copyToChannel(all,0);const oc=new OfflineAudioContext(1,Math.ceil(b.duration*SR),SR),s=oc.createBufferSource();s.buffer=b;s.connect(oc.destination);s.start();run((await oc.startRendering()).getChannelData(0))}catch(e){run(rs(all,R.rate))}
  R.ctx.close()}
 async function load(file){
  stop();$('msg').textContent='Lendo o áudio…';
  try{const ab=await file.arrayBuffer();const dec=await new OfflineAudioContext(1,1,SR).decodeAudioData(ab);
   const dur=Math.min(dec.duration,240);const oc=new OfflineAudioContext(1,Math.ceil(dur*SR),SR);const s=oc.createBufferSource();s.buffer=dec;s.connect(oc.destination);s.start();const r=await oc.startRendering();
-  $('ttl').textContent=file.name.replace(/\.[^.]+$/,'');st.demo=false;st.grid=null;setSub(dec.duration>240?'primeiros 4 minutos · ':'');
+  $('ttl').textContent=file.name.replace(/\.[^.]+$/,'');st.demo=false;st.gravado=false;st.grid=null;setSub(dec.duration>240?'primeiros 4 minutos · ':'');
   run(r.getChannelData(0))}catch(e){$('msg').textContent='Não consegui ler esse arquivo. Tente MP3, M4A, WAV ou um vídeo MP4.'}}
 
-function run(x){st.buf=x;st.BP=null;st.tr=0;st.lagMul=1;$('msg').textContent='Analisando…';$('play').disabled=false;
+function run(x){st.buf=x;$("shr").disabled=!!st.demo;st.BP=null;st.tr=0;st.lagMul=1;$('msg').textContent='Analisando…';$('play').disabled=false;
  setTimeout(()=>{let m=0;for(const v of x)m=Math.max(m,Math.abs(v));if(m>0&&m<.5){const g=.5/m;for(let i=0;i<x.length;i++)x[i]*=g}
   st.F=frames(x);analyse();$('msg').textContent='Pronto. Confira ouvindo: o compasso que está tocando fica destacado.';melodiaIA()},30)}
 
@@ -606,7 +615,7 @@ function kb(x,t0,m,dur,amp,tim){const T=TB[tim],f=440*2**((m-69)/12),Z=2048,A=T.
   const vb=T.vib?1+T.vib*Math.sin(2*Math.PI*5.5*i/SR)*Math.min(1,i/(.4*SR)):1;let s=0;
   for(let vi=0;vi<nv;vi++){let p=ph[vi]+inc[vi]*vb;p-=Math.floor(p);ph[vi]=p;const k=(p*Z)|0;s+=wa[k]*ga+(wb?wb[k]*gb:0)}
   ga*=da;gb*=db;x[t0+i]+=amp*env*s/nv}}
-function showDemo(){$('ttl').textContent='Exemplo: C – Am – F – G'+(st.ins=='violao'?'':' · '+prof().n);st.demo=true;st.grid=null;setSub('gravação de demonstração gerada aqui mesmo · ');run(demo())}
+function showDemo(){$('ttl').textContent='Exemplo: C – Am – F – G'+(st.ins=='violao'?'':' · '+prof().n);st.demo=true;st.gravado=false;st.grid=null;setSub('gravação de demonstração gerada aqui mesmo · ');run(demo())}
 function pluck(x,t0,m,dur,amp){const L=Math.round(SR/(440*2**((m-69)/12))),d=new Float32Array(L);for(let i=0;i<L;i++)d[i]=rnd()*2-1;let p=0;for(let i=0;i<dur&&t0+i<x.length;i++){const q=(p+1)%L,v=d[p];d[p]=.4985*(d[p]+d[q]);x[t0+i]+=v*amp*(i>dur-220?(dur-i)/220:1);p=q}}
 
 function stop(){if(st.src){try{st.src.stop()}catch(e){}st.src=null}cancelAnimationFrame(st.raf);$('play').textContent='▶ Ouvir';document.querySelectorAll('.hl.on').forEach(r=>r.classList.remove('on'))}
@@ -614,7 +623,19 @@ function play(){if(st.src){stop();return}try{st.ctx=st.ctx||new AudioContext();s
 function tick(){const t=st.ctx.currentTime-st.t0,bi=st.A?st.A.bars.findIndex(b=>t>=b.t0&&t<b.t1):-1;document.querySelectorAll('.hl').forEach(r=>r.classList.toggle('on',+r.dataset.b===bi));st.raf=requestAnimationFrame(tick)}
 
 $('rec').addEventListener('click',()=>R.on?recStop():recStart());
-$('f').addEventListener('change',e=>{const f=e.target.files[0];if(f)load(f)});
+$('f').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)load(f)});
+// Abrir um arquivo troca a gravação atual. Feedback do tio (27/11/2026): ele tocou em "Enviar" achando que mandava a gravação,
+// o Android abriu o gravador do celular e o arquivo novo apagou o que ele tinha gravado. Agora pergunta antes.
+$('f').addEventListener('click',e=>{if(st.gravado&&!confirm('Abrir um arquivo troca a gravação que está na tela. Para mandar esta gravação para alguém, use "Compartilhar áudio". Abrir mesmo assim?'))e.preventDefault()});
+// Compartilhar o áudio analisado como WAV (mono, 22050 Hz, 16 bits: ~2,6 MB por minuto). O arquivo só sai do aparelho
+// se a pessoa escolher para onde mandar (Web Share API). Sem ela (computador), baixa o arquivo.
+function wav(x,sr){const n=x.length,b=new DataView(new ArrayBuffer(44+2*n)),w=(o,t)=>{for(let i=0;i<t.length;i++)b.setUint8(o+i,t.charCodeAt(i))};
+ w(0,'RIFF');b.setUint32(4,36+2*n,true);w(8,'WAVEfmt ');b.setUint32(16,16,true);b.setUint16(20,1,true);b.setUint16(22,1,true);b.setUint32(24,sr,true);b.setUint32(28,2*sr,true);b.setUint16(32,2,true);b.setUint16(34,16,true);
+ w(36,'data');b.setUint32(40,2*n,true);for(let i=0;i<n;i++)b.setInt16(44+2*i,Math.max(-1,Math.min(1,x[i]))*32767,true);return new Blob([b],{type:'audio/wav'})}
+$('shr').addEventListener('click',async()=>{if(!st.buf||st.demo)return;
+ const nome=($('ttl').textContent.replace(/[^p{L}p{N} ._-]+/gu,'').trim().replace(/s+/g,'-')||'gravacao')+'.wav',arq=new File([wav(st.buf,SR)],nome,{type:'audio/wav'});
+ if(navigator.canShare&&navigator.canShare({files:[arq]})){try{await navigator.share({files:[arq],title:nome});$('msg').textContent='Áudio compartilhado.'}catch(e){if(e.name!='AbortError')$('msg').textContent='Não consegui compartilhar. Tente de novo.'}return}
+ const a=document.createElement('a'),u=URL.createObjectURL(arq);a.href=u;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);$('msg').textContent='Áudio baixado: '+nome});
 $('play').addEventListener('click',play);
 const setMode=m=>{st.mode=m;if(m=='melodia'&&BPS.fail=='rede')BPS.fail=false;$('mC').setAttribute('aria-pressed',m=='cifra');$('mM').setAttribute('aria-pressed',m=='melodia');$('msg').textContent='';render();melodiaIA()};
 $('mC').addEventListener('click',()=>setMode('cifra'));$('mM').addEventListener('click',()=>setMode('melodia'));
@@ -791,7 +812,7 @@ process(i){const c=i[0]&&i[0][0];if(!c)return true;if(this.n+c.length>this.b.len
 if(!this.n)this.f=currentFrame;this.b.set(c,this.n);this.n+=c.length;if(this.n>=2048){this.port.postMessage({f:this.f,d:this.b.slice(0,this.n)});this.n=0}return true}}
 registerProcessor('lp-rec',R)`;
 const LP={n:4,layers:[],click:true,T0:null,take:null,cal:false,ch:[],lat:null,src:''};
-try{const o=JSON.parse(localStorage.getItem('partitura.lat')||'null');if(o&&typeof o=='object'&&Number.isFinite(o.ms)&&o.ms>=0&&o.ms<=600)LP.saved={ms:Math.round(o.ms),src:o.src=='medido'?'medido':'ajustado'}}catch(e){}
+try{const o=JSON.parse(localStorage.getItem('partitura.lat')||'null');if(o&&typeof o=='object'&&Number.isFinite(o.ms)&&o.ms>=0&&o.ms<=600)LP.saved={ms:Math.round(o.ms),src:['medido','calibrado'].includes(o.src)?o.src:'ajustado'}}catch(e){}
 const lpL=()=>LP.lat/1000,lpLoopS=()=>LP.len/LP.sr,lpBeatS=()=>LP.len/LP.sr/LP.nb,lpMsg=t=>{$('lpM').textContent=t};
 // Filtro "notch" (RBJ): tira o clique do metrônomo (2093/2637 Hz) que vazar no microfone, senão ele fica gravado no loop
 function notch(x,f,sr,Q){const w=2*Math.PI*f/sr,al=Math.sin(w)/(2*Q),c=Math.cos(w),a0=1+al,b0=1/a0,b1=-2*c/a0,a2=(1-al)/a0;
@@ -862,18 +883,36 @@ async function lpCal(){if(LP.take||LP.cal)return;if(!await lpMic())return;if(LP.
  const pad=Math.round(.1*sr),tp=new Float32Array(pad*2+Math.round(.06*sr));for(let i=0;i<tp.length-2*pad;i++){const t=i/sr,a=t<.005?t/.005:Math.pow(.001/.6,(t-.005)/.055);tp[pad+i]=a*Math.sin(2*Math.PI*2637*t)}
  const bias=lpOnset(tp,sr)-pad,ds=[];for(const t of ts){const f=Math.round(t*sr),o=lpOnset(lpGrab(f,Math.round(.6*sr)),sr);if(o>=0)ds.push((o-bias)/sr*1000)}
  ds.sort((a,b)=>a-b);const med=ds[ds.length>>1],ok=ds.filter(d=>Math.abs(d-med)<4).length;LP.cal=false;
- if(ok<5){lpMsg('Não consegui ouvir os cliques direito. Tire o fone, aumente o volume e tente num lugar quieto. Ou ajuste no ouvido com −5/+5.');lpUI();return}
+ if(ok<5){lpMsg('Não consegui ouvir os cliques. Com fone isso é normal (o microfone não ouve): use "Calibrar tocando". Sem fone, aumente o volume e tente num lugar quieto.');lpUI();return}
  lpSetLat(med,'medido');lpMsg(`Atraso medido: ${LP.lat} ms. Fica guardado neste aparelho.`)}
+// Calibrar tocando (27/11/2026): com fone o microfone não ouve os cliques, e a estimativa do navegador erra (o tio, com fone com fio
+// no celular, ouvia a 2ª camada atrasada). Aqui quem toca dá uma nota curta junto com cada clique. A distância entre o clique
+// e a nota no microfone é exatamente o que a camada precisa: saída do som + reação de quem toca + entrada do microfone.
+const CT={n:8,cnt:2,gap:.8};
+// Ataque de uma nota: envelope de 5 ms (clique tirado por notch largo) e a maior subida em 10 ms, em escala log; volta até meia subida
+function lpAtaque(x,sr){const y=x.slice();for(let p=0;p<2;p++){notch(y,2093,sr,3);notch(y,2637,sr,3)}const W=Math.round(.005*sr),K=Math.round(.01*sr),n=y.length,e=new Float32Array(n);
+ let s=0;for(let i=0;i<n;i++){s+=Math.abs(y[i]);if(i>=W)s-=Math.abs(y[i-W]);e[i]=s/W}const fl=Float32Array.from(e).sort()[n>>2]+1e-6;
+ let best=0,bi=-1,pk=0;for(let i=K;i<n;i++){const d=Math.log((e[i]+fl)/(e[i-K]+fl));if(d>best){best=d;bi=i}pk=Math.max(pk,e[i])}
+ if(bi<0||best<Math.log(3)||pk<fl*6)return -1;const lo=e[bi-K],mid=lo+.5*(e[bi]-lo);let i=bi;while(i>bi-K&&e[i-1]>mid)i--;return i-(W>>1)}
+async function lpCalT(){if(LP.take||LP.cal)return;if(!await lpMic())return;if(LP.T0!=null)lpHalt();LP.cal='t';lpUI();lpMsg('Escute 2 cliques de contagem e toque uma nota curta junto com cada um dos 8 seguintes.');
+ const ctx=LP.ctx,sr=LP.sr,t1=ctx.currentTime+.4,ts=[];LP.calT0=t1;
+ for(let i=0;i<CT.cnt+CT.n;i++){const t=t1+i*CT.gap;clickAt(ctx,t,i<CT.cnt,1,LP.out);if(i>=CT.cnt)ts.push(t)}
+ await new Promise(r=>setTimeout(r,(t1+(CT.cnt+CT.n)*CT.gap+.7-ctx.currentTime)*1000));if(!LP.ctx||LP.cal!=='t'){LP.cal=false;return}
+ const ds=[];for(const t of ts){const a=Math.round((t-.2)*sr),o=lpAtaque(lpGrab(a,Math.round(.75*sr)),sr);if(o>=0)ds.push((a+o)/sr-t)}
+ ds.sort((a,b)=>a-b);const med=ds[ds.length>>1],ok=ds.filter(d=>Math.abs(d-med)<.035).length;LP.cal=false;LP.calD=ds;
+ if(ok<5){lpMsg('Só entendi '+ok+' de '+CT.n+' notas no tempo. Tente de novo tocando notas curtas e firmes, uma em cada clique.');lpUI();return}
+ lpSetLat(Math.max(0,med*1000),'calibrado');lpMsg('Pronto: '+LP.lat+' ms. Fica guardado neste aparelho. Ao trocar de fone ou caixa, calibre de novo.')}
 function lpUI(){const has=LP.layers.length>0,busy=!!LP.take||LP.cal,lock=has||busy||LP.T0!=null;
  const r=$('lpRec');r.textContent=has?'● Gravar camada':'● Gravar loop';r.disabled=busy||!LP.ctx;r.classList.toggle('on',!!LP.take);
  $('lpPlay').textContent=LP.T0!=null?'■ Parar':'▶ Tocar';$('lpPlay').disabled=(!has&&LP.T0==null)||LP.cal;
- $('lpUndo').disabled=!has||busy;$('lpClr').disabled=!has||busy;$('lpCal').disabled=busy||!LP.ctx;
+ $('lpUndo').disabled=!has||busy;$('lpClr').disabled=!has||busy;$('lpCal').disabled=$('lpCalT').disabled=busy||!LP.ctx;
  document.querySelectorAll('#lpN button').forEach(b=>{b.setAttribute('aria-pressed',+b.dataset.n===LP.n);b.disabled=lock});$('lpDn').disabled=$('lpUp').disabled=lock;
  $('lpBpm').textContent=has?LP.bpm:st.cnt.bpm;$('lpClk').setAttribute('aria-pressed',LP.click);
  $('lpLat').textContent=LP.lat==null?'–':`${LP.lat} ms (${LP.src})`;
  $('lpL').innerHTML=has?LP.layers.map((l,i)=>`<button type="button" data-i="${i}" aria-pressed="${l.on}">${i+1} ${l.on?'🔊':'🔇'}</button>`).join(''):'<small>nenhuma ainda</small>'}
 function lpRaf(){if(!LP.ctx)return;const now=LP.ctx.currentTime,bpb=LP.bpb||st.bpb;let txt,beat=-1,prog=0,rec=false;
- if(LP.cal)txt='Medindo o atraso…';
+ if(LP.cal=='t'){const i=Math.floor((now-LP.calT0)/CT.gap+.5);txt=i<0?'Prepare-se…':i<CT.cnt?'Contagem: '+(i+1):i<CT.cnt+CT.n?'Toque junto: '+(i-CT.cnt+1)+' de '+CT.n:'Calculando…';beat=i>=0&&i<CT.cnt+CT.n?i%bpb:-1}
+ else if(LP.cal)txt='Medindo o atraso…';
  else if(LP.T0==null)txt=LP.layers.length?'Parado':'Pronto para gravar';
  else{const bs=lpBeatS(),d=now-LP.T0,tk=LP.take;
   if(d<0){const i=bpb+Math.floor(d/bs);beat=Math.max(0,i);txt=`Contagem: ${Math.max(1,i+1)}`;rec=!!tk}
@@ -887,7 +926,7 @@ function lpRaf(){if(!LP.ctx)return;const now=LP.ctx.currentTime,bpb=LP.bpb||st.b
 function lpClose(){clearInterval(LP.iv);lpHalt();LP.cal=false;if(LP.ms)LP.ms.getTracks().forEach(t=>t.stop());if(LP.ctx)LP.ctx.close().catch(()=>{});LP.ctx=LP.ms=null;LP.ch=[]} // desliga o microfone de verdade
 $('lpBtn').addEventListener('click',async()=>{if(R.on){$('msg').textContent='Pare a gravação antes de abrir o looper.';return}stop();lpMsg('');$('lp').showModal();lpUI();await lpMic();lpUI()});
 $('lp').addEventListener('close',lpClose);
-$('lpRec').addEventListener('click',lpRec);$('lpPlay').addEventListener('click',lpPlay);$('lpCal').addEventListener('click',lpCal);
+$('lpRec').addEventListener('click',lpRec);$('lpPlay').addEventListener('click',lpPlay);$('lpCal').addEventListener('click',lpCal);$('lpCalT').addEventListener('click',lpCalT);
 $('lpUndo').addEventListener('click',()=>{const l=LP.layers.pop();if(l&&l.src)try{l.src.stop()}catch(e){}if(!LP.layers.length)lpHalt();lpMix();lpMsg('Última camada apagada.');lpUI()});
 $('lpClr').addEventListener('click',()=>{if(!confirm('Apagar o loop e todas as camadas?'))return;lpHalt();LP.layers=[];lpMsg('');lpUI()});
 $('lpClk').addEventListener('click',()=>{LP.click=!LP.click;lpUI()});
@@ -900,7 +939,7 @@ $('lpL').addEventListener('click',e=>{const b=e.target.closest('button[data-i]')
 // ---- Modo offline: o service worker guarda o app no aparelho (só funciona em HTTPS ou localhost)
 if('serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
-if(location.hostname=='127.0.0.1')window.__P={st,run,analyse,setMode,setIns,kb,pluck,forma,BPS,setSeed:v=>{seed=v},LP,lpOnset,notch};
+if(location.hostname=='127.0.0.1')window.__P={st,run,analyse,setMode,setIns,kb,pluck,forma,BPS,setSeed:v=>{seed=v},LP,lpOnset,notch,lpCalT,CT};
 setIns(st.ins);showDemo();
 }
 </script></body></html>
